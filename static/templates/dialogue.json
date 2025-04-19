@@ -1,0 +1,59 @@
+{
+    "name": "Dialogue",
+    "description": "Clean and minimal design with soft blue tones",
+    "preview_image": "templates/template_previews/dialogue.png",
+    "design": {
+        "type": "card",
+        "background": {
+            "type": "solid",
+            "color": "#E6F2FF",
+            "accent_color": "#4A90E2"
+        },
+        "border_radius": "8px",
+        "shadow": "0 4px 6px rgba(0,0,0,0.1)"
+    },
+    "typography": {
+        "title": {
+            "font": "Inter",
+            "size": "24px",
+            "color": "#1A365D",
+            "weight": "600"
+        },
+        "body": {
+            "font": "Inter",
+            "size": "16px",
+            "color": "#2D3748"
+        }
+    },
+    "styles": {
+        "title_slide": {
+            "background": {
+                "type": "solid",
+                "color": {"r": 230, "g": 242, "b": 255}
+            },
+            "title_font": {
+                "name": "Inter",
+                "size": 44,
+                "color": {"r": 26, "g": 54, "b": 93},
+                "bold": true
+            }
+        },
+        "content_slide": {
+            "background": {
+                "type": "solid",
+                "color": {"r": 250, "g": 252, "b": 255}
+            },
+            "title_font": {
+                "name": "Inter",
+                "size": 32,
+                "color": {"r": 26, "g": 54, "b": 93},
+                "bold": true
+            },
+            "body_font": {
+                "name": "Inter",
+                "size": 18,
+                "color": {"r": 45, "g": 55, "b": 72}
+            }
+        }
+    }
+}

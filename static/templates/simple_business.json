@@ -1,0 +1,48 @@
+{
+    "name": "Simple Business",
+    "description": "A clean and professional template with blue and white colors",
+    "preview_image": "templates/template_previews/simple_business.png",
+    "styles": {
+        "title_slide": {
+            "background": {
+                "type": "solid",
+                "color": {"r": 0, "g": 51, "b": 102}
+            },
+            "title_font": {
+                "name": "Arial",
+                "size": 44,
+                "color": {"r": 255, "g": 255, "b": 255},
+                "bold": true,
+                "alignment": "center"
+            },
+            "subtitle_font": {
+                "name": "Arial",
+                "size": 24,
+                "color": {"r": 200, "g": 200, "b": 200},
+                "bold": false,
+                "alignment": "center"
+            }
+        },
+        "content_slide": {
+            "background": {
+                "type": "solid",
+                "color": {"r": 255, "g": 255, "b": 255}
+            },
+            "title_font": {
+                "name": "Arial",
+                "size": 32,
+                "color": {"r": 0, "g": 51, "b": 102},
+                "bold": true,
+                "alignment": "left"
+            },
+            "body_font": {
+                "name": "Arial",
+                "size": 18,
+                "color": {"r": 50, "g": 50, "b": 50},
+                "bold": false,
+                "alignment": "left",
+                "bullet_style": "disc"
+            }
+        }
+    }
+}

@@ -1,0 +1,54 @@
+{
+    "name": "Creative Colorful",
+    "description": "Vibrant and modern template with eye-catching design",
+    "preview_image": "templates/template_previews/creative_colorful.png",
+    "styles": {
+        "title_slide": {
+            "background": {
+                "type": "gradient",
+                "gradient_start": {"r": 255, "g": 87, "b": 51},
+                "gradient_end": {"r": 87, "g": 51, "b": 255},
+                "gradient_direction": "diagonal"
+            },
+            "title_font": {
+                "name": "Montserrat",
+                "size": 44,
+                "color": {"r": 255, "g": 255, "b": 255},
+                "bold": true,
+                "italic": false,
+                "alignment": "center"
+            },
+            "subtitle_font": {
+                "name": "Montserrat",
+                "size": 24,
+                "color": {"r": 230, "g": 230, "b": 255},
+                "bold": false,
+                "italic": false,
+                "alignment": "center"
+            }
+        },
+        "content_slide": {
+            "background": {
+                "type": "solid",
+                "color": {"r": 245, "g": 247, "b": 255}
+            },
+            "title_font": {
+                "name": "Montserrat",
+                "size": 32,
+                "color": {"r": 51, "g": 87, "b": 255},
+                "bold": true,
+                "italic": false,
+                "alignment": "left"
+            },
+            "body_font": {
+                "name": "Montserrat",
+                "size": 18,
+                "color": {"r": 50, "g": 50, "b": 50},
+                "bold": false,
+                "italic": false,
+                "alignment": "left",
+                "bullet_style": "disc"
+            }
+        }
+    }
+}
