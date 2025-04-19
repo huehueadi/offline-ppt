@@ -1,45 +1,49 @@
 {
     "name": "Default Template",
-    "description": "A clean and professional template for presentations",
-    "preview_image": "default_preview.png",
+    "description": "A clean and professional template",
+    "preview_image": "images/backgrounds/4.png",
     "styles": {
-        "title_slide": {
-            "background": {
-                "type": "solid",
-                "color": {"r": 240, "g": 240, "b": 240}
-            },
-            "title_font": {
-                "name": "Calibri",
-                "size": 44,
-                "color": {"r": 0, "g": 0, "b": 0},
-                "bold": true,
-                "alignment": "center"
-            }
+      "title_slide": {
+        "background_image": "images/backgrounds/4.png",
+        "background": {
+          "type": "solid",
+          "color": {"r": 240, "g": 240, "b": 240}
         },
-        "content_slide": {
-            "background": {
-                "type": "solid",
-                "color": {"r": 255, "g": 255, "b": 255}
-            },
-            "title_font": {
-                "name": "Calibri",
-                "size": 32,
-                "color": {"r": 0, "g": 0, "b": 0},
-                "bold": true,
-                "alignment": "left"
-            },
-            "body_font": {
-                "name": "Calibri",
-                "size": 18,
-                "color": {"r": 50, "g": 50, "b": 50},
-                "alignment": "left"
-            }
+        "title_font": {
+          "name": "Calibri",
+          "size": 44,
+          "color": {"r": 0, "g": 0, "b": 0},
+          "bold": true,
+          "alignment": "center"
         },
-        "image_slide": {
-            "fill_color": {"r": 245, "g": 245, "b": 245},
-            "border_color": {"r": 200, "g": 200, "b": 200},
-            "border_width": 1.5,
-            "border_style": "dashed"
-        }
+        "image_position": {"left": 2.5, "top": 4.0, "width": 5.0, "height": 2.5}
+      },
+      "content_slide": {
+        "background_image": "images/backgrounds/5.png",
+        "background": {
+          "type": "solid",
+          "color": {"r": 255, "g": 255, "b": 255}
+        },
+        "title_font": {
+          "name": "Calibri",
+          "size": 32,
+          "color": {"r": 0, "g": 0, "b": 0},
+          "bold": true,
+          "alignment": "left"
+        },
+        "body_font": {
+          "name": "Calibri",
+          "size": 18,
+          "color": {"r": 50, "g": 50, "b": 50},
+          "alignment": "left"
+        },
+        "image_position": {"left": 6.0, "top": 1.5, "width": 3.5, "height": 4.5}
+      },
+      "image_slide": {
+        "fill_color": {"r": 245, "g": 245, "b": 245},
+        "border_color": {"r": 200, "g": 200, "b": 200},
+        "border_width": 1.5,
+        "border_style": "dashed"
+      }
     }
-}
+  }
