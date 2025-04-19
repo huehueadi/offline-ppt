@@ -220,7 +220,6 @@ def generate_image_prompt(prompt):
     image_prompt = f"Professional presentation image related to: {prompt}"
     return image_prompt
 
-
 def create_presentation(content_data, image_prompts=None, template="default"):
     """Create a PowerPoint presentation that looks EXACTLY like the HTML preview.
     Returns both the file path and a preview JSON structure for HTML rendering."""
@@ -241,8 +240,38 @@ def create_presentation(content_data, image_prompts=None, template="default"):
             "title": content_data.get("title", "Presentation"),
             "template": template,
             "styles": {
-                "title_slide": title_slide_styles,
-                "content_slide": content_slide_styles,
+                "title_slide": {
+                    "background": title_slide_styles.get('background', {
+                        'type': 'solid',
+                        'color': {'r': 240, 'g': 240, 'b': 240}
+                    }),
+                    "title_font": title_slide_styles.get('title_font', {
+                        'name': 'Calibri',
+                        'size': 44,
+                        'color': {'r': 0, 'g': 0, 'b': 0},
+                        'bold': True,
+                        'alignment': 'center'
+                    })
+                },
+                "content_slide": {
+                    "background": content_slide_styles.get('background', {
+                        'type': 'solid',
+                        'color': {'r': 255, 'g': 255, 'b': 255}
+                    }),
+                    "title_font": content_slide_styles.get('title_font', {
+                        'name': 'Calibri',
+                        'size': 32,
+                        'color': {'r': 0, 'g': 0, 'b': 0},
+                        'bold': True,
+                        'alignment': 'left'
+                    }),
+                    "body_font": content_slide_styles.get('body_font', {
+                        'name': 'Calibri',
+                        'size': 18,
+                        'color': {'r': 50, 'g': 50, 'b': 50},
+                        'alignment': 'left'
+                    })
+                },
                 "image_slide": styles.get('image_slide', {})
             },
             "slides": []
@@ -252,7 +281,6 @@ def create_presentation(content_data, image_prompts=None, template="default"):
         prs = Presentation()
         
         # ---------- TITLE SLIDE ----------
-        # Use a blank slide to have full control over layout
         blank_slide_layout = prs.slide_layouts[6]  # Usually the blank layout
         title_slide = prs.slides.add_slide(blank_slide_layout)
         
@@ -262,89 +290,96 @@ def create_presentation(content_data, image_prompts=None, template="default"):
             background = title_slide.background
             fill = background.fill
             fill.solid()
-            bg_color = background_settings.get('color', {'r': 255, 'g': 255, 'b': 255})
+            bg_color = background_settings.get('color', {'r': 240, 'g': 240, 'b': 240})
             fill.fore_color.rgb = RGBColor(bg_color['r'], bg_color['g'], bg_color['b'])
+        else:
+            background = title_slide.background
+            fill = background.fill
+            fill.solid()
+            fill.fore_color.rgb = RGBColor(240, 240, 240)
         
-        # Add presentation title - Centered and with consistent positioning
+        # Add presentation title
         left = Inches(1.0)
-        top = Inches(2.0)  # Move down for better vertical centering
+        top = Inches(2.0)
         width = Inches(8.0)
         height = Inches(1.5)
         title_box = title_slide.shapes.add_textbox(left, top, width, height)
         
-        # Format the title exactly like in the preview
         title_frame = title_box.text_frame
         title_frame.text = content_data.get("title", "Presentation")
         title_para = title_frame.paragraphs[0]
         
-        # Apply title font styling
         title_font_settings = title_slide_styles.get('title_font', {})
         title_para.font.name = title_font_settings.get('name', 'Calibri')
         title_para.font.size = Pt(title_font_settings.get('size', 44))
         title_color = title_font_settings.get('color', {'r': 0, 'g': 0, 'b': 0})
         title_para.font.color.rgb = RGBColor(title_color['r'], title_color['g'], title_color['b'])
         title_para.font.bold = title_font_settings.get('bold', True)
-        title_para.alignment = PP_ALIGN.CENTER  # Center align title
+        title_para.alignment = PP_ALIGN.CENTER
         
-        # Add image placeholder if title slide has an image prompt - Match HTML preview dimensions
+        # Add image placeholder if title slide has an image prompt
+        title_image_style = {}
         if image_prompts and "title" in image_prompts:
-            # Position the image placeholder in the center of the slide - match preview
-            img_left = Inches(2.5)  # Centered horizontally
-            img_top = Inches(4.0)   # Below the title with consistent spacing
+            img_left = Inches(2.5)
+            img_top = Inches(4.0)
             img_width = Inches(5.0)
             img_height = Inches(2.5)
             
-            # Create a placeholder shape with border and fill
             img_placeholder = title_slide.shapes.add_shape(
-                1,  # Rectangle
-                img_left, img_top, img_width, img_height
+                1, img_left, img_top, img_width, img_height
             )
             
-            # Style the placeholder to look like the HTML preview
             img_placeholder.fill.solid()
-            img_placeholder.fill.fore_color.rgb = RGBColor(245, 245, 245)  # Very light gray fill
-            img_placeholder.line.color.rgb = RGBColor(200, 200, 200)  # Light gray border
+            img_placeholder.fill.fore_color.rgb = RGBColor(245, 245, 245)
+            img_placeholder.line.color.rgb = RGBColor(200, 200, 200)
             img_placeholder.line.width = Pt(1.5)
-            img_placeholder.line.dash_style = 2  # Dashed line
+            img_placeholder.line.dash_style = 2
             
-            # Add text to the placeholder
             text_frame = img_placeholder.text_frame
             text_frame.word_wrap = True
-            text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE  # Vertically center the text
+            text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE
             
-            # Add image icon
             icon_p = text_frame.add_paragraph()
             icon_p.text = "🖼️"
             icon_p.alignment = PP_ALIGN.CENTER
-            icon_p.font.size = Pt(48)  # Make the icon large
+            icon_p.font.size = Pt(48)
             icon_p.space_after = Pt(10)
             
-            # Add image prompt text
             prompt_p = text_frame.add_paragraph()
             prompt_p.text = image_prompts['title']
             prompt_p.alignment = PP_ALIGN.CENTER
             prompt_p.font.italic = True
             prompt_p.font.size = Pt(14)
             prompt_p.font.color.rgb = RGBColor(100, 100, 100)
+            
+            # Store image style for preview
+            title_image_style = {
+                "left": 2.5,
+                "top": 4.0,
+                "width": 5.0,
+                "height": 2.5,
+                "fill_color": {"r": 245, "g": 245, "b": 245},
+                "border_color": {"r": 200, "g": 200, "b": 200},
+                "border_width": 1.5,
+                "border_style": "dashed"
+            }
         
         # Add title slide to preview data
         preview_data["slides"].append({
             "type": "title",
             "title": content_data.get("title", "Presentation"),
             "has_image": "title" in image_prompts if image_prompts else False,
-            "image_prompt": image_prompts.get("title") if image_prompts else None
+            "image_prompt": image_prompts.get("title") if image_prompts else None,
+            "image_style": title_image_style
         })
         
         # ---------- CONTENT SLIDES ----------
         for i, slide_data in enumerate(content_data.get("slides", [])):
             slide_index = str(i)
             
-            # Create a blank slide for full layout control
             content_slide = prs.slides.add_slide(blank_slide_layout)
             
-            # Apply content slide background
-            content_slide_style = content_slide_styles
-            background_settings = content_slide_style.get('background', {})
+            background_settings = content_slide_styles.get('background', {})
             if background_settings.get('type') == 'solid':
                 background = content_slide.background
                 fill = background.fill
@@ -352,20 +387,17 @@ def create_presentation(content_data, image_prompts=None, template="default"):
                 bg_color = background_settings.get('color', {'r': 255, 'g': 255, 'b': 255})
                 fill.fore_color.rgb = RGBColor(bg_color['r'], bg_color['g'], bg_color['b'])
             
-            # Add slide title - Consistent position matching HTML preview
             title_left = Inches(0.5)
             title_top = Inches(0.5)
             title_width = Inches(9.0)
             title_height = Inches(0.8)
             title_box = content_slide.shapes.add_textbox(title_left, title_top, title_width, title_height)
             
-            # Format the title exactly like in the preview
             title_frame = title_box.text_frame
             title_frame.text = slide_data.get("title", f"Slide {i+1}")
             title_para = title_frame.paragraphs[0]
             
-            # Apply title font styling
-            title_font = content_slide_style.get('title_font', {})
+            title_font = content_slide_styles.get('title_font', {})
             title_para.font.name = title_font.get('name', 'Calibri')
             title_para.font.size = Pt(title_font.get('size', 32))
             title_color = title_font.get('color', {'r': 0, 'g': 0, 'b': 0})
@@ -377,49 +409,33 @@ def create_presentation(content_data, image_prompts=None, template="default"):
                 'right': PP_ALIGN.RIGHT
             }.get(title_font.get('alignment', 'left'), PP_ALIGN.LEFT)
             
-            # Calculate slide content and maintain consistent layout
             points_styling = []
-            content_height = 0
-            
-            # Add content text box for bullet points - with better positioning
             if slide_data.get("points", []):
-                content_left = Inches(0.7)
-                content_top = Inches(1.5)  # Start after title with consistent spacing
-                content_width = Inches(8.5)
-                
-                # Calculate content height based on number of points - match HTML preview
-                points_count = len(slide_data.get("points", []))
-                content_height = max(Inches(0.3 * points_count), Inches(1.0))
+                content_left = Inches(0.5)
+                content_top = Inches(1.5)
+                content_width = Inches(5.0)
+                content_height = Inches(4.5)
                 
                 content_box = content_slide.shapes.add_textbox(content_left, content_top, content_width, content_height)
                 
-                # Set up text frame
                 text_frame = content_box.text_frame
                 text_frame.word_wrap = True
                 
-                # Apply body font styling
-                body_font = content_slide_style.get('body_font', {})
+                body_font = content_slide_styles.get('body_font', {})
                 
-                # Add bullet points with consistent spacing
                 for point in slide_data.get("points", []):
-                    # Add paragraph
                     if text_frame.paragraphs and text_frame.paragraphs[0].text == "":
-                        # Use the first paragraph if it's empty
                         p = text_frame.paragraphs[0]
                     else:
-                        # Add a new paragraph
                         p = text_frame.add_paragraph()
                     
-                    # Add bullet character and text
                     p.text = "• " + point
                     
-                    # Apply font styling
                     p.font.name = body_font.get('name', 'Calibri')
                     p.font.size = Pt(body_font.get('size', 18))
                     body_color = body_font.get('color', {'r': 50, 'g': 50, 'b': 50})
                     p.font.color.rgb = RGBColor(body_color['r'], body_color['g'], body_color['b'])
                     
-                    # Apply consistent spacing
                     p.space_before = Pt(6)
                     p.space_after = Pt(6)
                     p.alignment = {
@@ -428,75 +444,72 @@ def create_presentation(content_data, image_prompts=None, template="default"):
                         'right': PP_ALIGN.RIGHT
                     }.get(body_font.get('alignment', 'left'), PP_ALIGN.LEFT)
                     
-                    # Add to points styling array for preview - keep synchronized
                     points_styling.append({
                         "text": point,
                         "level": 0,
                         "font_name": body_font.get('name', 'Calibri'),
                         "font_size": body_font.get('size', 18),
                         "color": body_color,
-                        "alignment": body_font.get('alignment', 'left')
+                        "alignment": body_font.get('alignment', 'left'),
+                        "space_before": 6,
+                        "space_after": 6
                     })
             
-            # Add image placeholder if slide has an image prompt - with consistent positioning
+            content_image_style = {}
             if image_prompts and slide_index in image_prompts:
-                # Adaptive positioning based on content height
-                points_count = len(slide_data.get("points", []))
+                img_left = Inches(6.0)
+                img_top = Inches(1.5)
+                img_width = Inches(3.5)
+                img_height = Inches(4.5)
                 
-                # Calculate dynamic positioning based on content
-                img_top = Inches(1.5 + (0.3 * points_count) + 0.2)  # Start after content
-                
-                # Ensure image is at a sensible position regardless of content
-                img_top = min(img_top, Inches(5.0))  # Cap to avoid going off slide
-                
-                img_left = Inches(2.5)  # Centered horizontally
-                img_width = Inches(5.0)
-                img_height = Inches(2.5)
-                
-                # Create a placeholder shape with border and fill
                 img_placeholder = content_slide.shapes.add_shape(
-                    1,  # Rectangle
-                    img_left, img_top, img_width, img_height
+                    1, img_left, img_top, img_width, img_height
                 )
                 
-                # Style the placeholder to look like the HTML preview
                 img_placeholder.fill.solid()
-                img_placeholder.fill.fore_color.rgb = RGBColor(245, 245, 245)  # Very light gray fill
-                img_placeholder.line.color.rgb = RGBColor(200, 200, 200)  # Light gray border
+                img_placeholder.fill.fore_color.rgb = RGBColor(245, 245, 245)
+                img_placeholder.line.color.rgb = RGBColor(200, 200, 200)
                 img_placeholder.line.width = Pt(1.5)
-                img_placeholder.line.dash_style = 2  # Dashed line
+                img_placeholder.line.dash_style = 2
                 
-                # Add text to the placeholder
                 text_frame = img_placeholder.text_frame
                 text_frame.word_wrap = True
-                text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE  # Vertically center the text
+                text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE
                 
-                # Add image icon
                 icon_p = text_frame.add_paragraph()
                 icon_p.text = "🖼️"
                 icon_p.alignment = PP_ALIGN.CENTER
-                icon_p.font.size = Pt(48)  # Make the icon large
+                icon_p.font.size = Pt(48)
                 icon_p.space_after = Pt(10)
                 
-                # Add image prompt text
                 prompt_p = text_frame.add_paragraph()
                 prompt_p.text = image_prompts[slide_index]
                 prompt_p.alignment = PP_ALIGN.CENTER
                 prompt_p.font.italic = True
                 prompt_p.font.size = Pt(14)
                 prompt_p.font.color.rgb = RGBColor(100, 100, 100)
+                
+                content_image_style = {
+                    "left": 6.0,
+                    "top": 1.5,
+                    "width": 3.5,
+                    "height": 4.5,
+                    "fill_color": {"r": 245, "g": 245, "b": 245},
+                    "border_color": {"r": 200, "g": 200, "b": 200},
+                    "border_width": 1.5,
+                    "border_style": "dashed"
+                }
             
-            # Add content slide to preview data
             preview_data["slides"].append({
                 "type": "content",
                 "title": slide_data.get("title", f"Slide {i+1}"),
                 "points": slide_data.get("points", []),
                 "points_styling": points_styling,
                 "has_image": slide_index in image_prompts if image_prompts else False,
-                "image_prompt": image_prompts.get(slide_index) if image_prompts else None
+                "image_prompt": image_prompts.get(slide_index) if image_prompts else None,
+                "image_style": content_image_style
             })
         
-        # Save to temporary file
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pptx")
         prs.save(temp_file.name)
         temp_file.close()
@@ -506,7 +519,6 @@ def create_presentation(content_data, image_prompts=None, template="default"):
     except Exception as e:
         logger.error(f"PowerPoint creation error: {str(e)}")
         raise Exception(f"Failed to create PowerPoint: {str(e)}")
-
 @app.route('/generate_ppt', methods=['POST'])
 def generate_ppt():
     try:

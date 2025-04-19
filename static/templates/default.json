@@ -1,27 +1,18 @@
 {
-    "name": "Default Classic",
-    "description": "Classic white design with clean, professional layout",
-    "preview_image": "templates/template_previews/default.png",
+    "name": "Default Template",
+    "description": "A clean and professional template for presentations",
+    "preview_image": "default_preview.png",
     "styles": {
         "title_slide": {
             "background": {
                 "type": "solid",
-                "color": {"r": 255, "g": 255, "b": 255}
+                "color": {"r": 240, "g": 240, "b": 240}
             },
             "title_font": {
                 "name": "Calibri",
                 "size": 44,
                 "color": {"r": 0, "g": 0, "b": 0},
                 "bold": true,
-                "italic": false,
-                "alignment": "center"
-            },
-            "subtitle_font": {
-                "name": "Calibri",
-                "size": 24,
-                "color": {"r": 100, "g": 100, "b": 100},
-                "bold": false,
-                "italic": false,
                 "alignment": "center"
             }
         },
@@ -35,18 +26,20 @@
                 "size": 32,
                 "color": {"r": 0, "g": 0, "b": 0},
                 "bold": true,
-                "italic": false,
                 "alignment": "left"
             },
             "body_font": {
                 "name": "Calibri",
                 "size": 18,
                 "color": {"r": 50, "g": 50, "b": 50},
-                "bold": false,
-                "italic": false,
-                "alignment": "left",
-                "bullet_style": "disc"
+                "alignment": "left"
             }
+        },
+        "image_slide": {
+            "fill_color": {"r": 245, "g": 245, "b": 245},
+            "border_color": {"r": 200, "g": 200, "b": 200},
+            "border_width": 1.5,
+            "border_style": "dashed"
         }
     }
 }

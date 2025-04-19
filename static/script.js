@@ -162,308 +162,276 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Generate HTML preview that matches PowerPoint styling
-    function generateHtmlPreview(previewData) {
-        previewContent.innerHTML = '';
-        
-        if (!previewData || !previewData.slides || previewData.slides.length === 0) {
-            previewContent.innerHTML = '<p>No preview data available</p>';
-            return;
-        }
-        
-        // Extract title and template styles
-        const pptTitle = previewData.title;
-        const titleSlideStyles = previewData.styles.title_slide || {};
-        const contentSlideStyles = previewData.styles.content_slide || {};
-        
-        // Create preview section title
-        const previewTitle = document.createElement('h3');
-        previewTitle.className = 'preview-title';
-        previewTitle.textContent = pptTitle;
-        previewContent.appendChild(previewTitle);
-        
-        // Create slides preview
-        previewData.slides.forEach((slide, index) => {
-            const slidePreview = document.createElement('div');
-            slidePreview.className = 'slide-preview';
-            
-            // Apply slide styling based on type
-            const isTitle = slide.type === 'title';
-            const slideStyles = isTitle ? titleSlideStyles : contentSlideStyles;
-            const background = slideStyles.background || {};
-            
-            // Apply background color
-            if (background.type === 'solid' && background.color) {
-                const bgColor = background.color;
-                slidePreview.style.backgroundColor = `rgb(${bgColor.r}, ${bgColor.g}, ${bgColor.b})`;
-            }
-            
-            // Add slide title with consistent styling and positioning
-            const slideTitle = document.createElement('h4');
-            const titleFont = slideStyles.title_font || {};
-            slideTitle.textContent = slide.title;
-            
-            // Apply title font styling to match PowerPoint
-            if (titleFont.name) slideTitle.style.fontFamily = titleFont.name;
-            if (titleFont.size) slideTitle.style.fontSize = `${titleFont.size / 12}rem`;
-            if (titleFont.bold) slideTitle.style.fontWeight = 'bold';
-            
-            if (titleFont.color) {
-                const color = titleFont.color;
-                slideTitle.style.color = `rgb(${color.r}, ${color.g}, ${color.b})`;
-            }
-            
-            if (titleFont.alignment) {
-                slideTitle.style.textAlign = titleFont.alignment;
-            }
-            
-            // Add appropriate positioning and spacing
-            if (isTitle) {
-                slideTitle.style.paddingTop = '2rem'; // Match PowerPoint title slide spacing
-                slideTitle.style.paddingBottom = '1rem';
-            } else {
-                slideTitle.style.paddingTop = '0.5rem'; // Match PowerPoint content slide spacing
-                slideTitle.style.paddingBottom = '0.5rem';
-            }
-            
-            slidePreview.appendChild(slideTitle);
-            
-            // Add bullet points for content slides with consistent styling
-            if (!isTitle && slide.points && slide.points.length > 0) {
-                const pointsList = document.createElement('ul');
-                pointsList.style.paddingLeft = '1.4rem'; // Match PowerPoint bullet indentation
-                pointsList.style.marginTop = '0.5rem';
-                pointsList.style.marginBottom = '0.5rem';
-                
-                slide.points.forEach((point, pointIndex) => {
-                    const pointItem = document.createElement('li');
-                    pointItem.textContent = point;
-                    
-                    // Apply styling to match PowerPoint exactly
-                    if (slide.points_styling && slide.points_styling[pointIndex]) {
-                        const styling = slide.points_styling[pointIndex];
-                        
-                        if (styling.font_name) pointItem.style.fontFamily = styling.font_name;
-                        if (styling.font_size) pointItem.style.fontSize = `${styling.font_size / 12}rem`;
-                        
-                        if (styling.color) {
-                            const color = styling.color;
-                            pointItem.style.color = `rgb(${color.r}, ${color.g}, ${color.b})`;
-                        }
-                        
-                        if (styling.alignment) {
-                            pointItem.style.textAlign = styling.alignment;
-                        }
-                        
-                        // Add consistent spacing to match PowerPoint
-                        pointItem.style.marginBottom = '0.5rem';
-                    }
-                    
-                    pointsList.appendChild(pointItem);
-                });
-                
-                slidePreview.appendChild(pointsList);
-            }
-            
-            // If slide has an image prompt, add image placeholder with consistent styling
-            if (slide.has_image && slide.image_prompt) {
-                const imagePlaceholder = document.createElement('div');
-                imagePlaceholder.className = 'image-placeholder';
-                
-                // Position and size to match PowerPoint
-                if (isTitle) {
-                    // Title slide image positioning
-                    imagePlaceholder.style.marginTop = '1rem';
-                    imagePlaceholder.style.width = '83%';  // Match PowerPoint width
-                    imagePlaceholder.style.margin = '1rem auto';  // Center horizontally
-                } else {
-                    // Content slide image positioning - calculate based on content
-                    const pointsCount = slide.points ? slide.points.length : 0;
-                    imagePlaceholder.style.marginTop = pointsCount > 0 ? '0.8rem' : '2rem';
-                    imagePlaceholder.style.width = '83%';  // Match PowerPoint width
-                    imagePlaceholder.style.margin = '0 auto';  // Center horizontally
-                }
-                
-                // Apply consistent styling
-                imagePlaceholder.style.backgroundColor = '#f5f5f5';  // Light gray fill
-                imagePlaceholder.style.border = '1.5px dashed #c8c8c8';  // Light gray dashed border
-                imagePlaceholder.style.borderRadius = '4px';  // Slight rounding
-                imagePlaceholder.style.padding = '1.5rem 1rem';  // Consistent internal spacing
-                imagePlaceholder.style.textAlign = 'center';  // Center content
-                
-                const imageIcon = document.createElement('div');
-                imageIcon.className = 'image-placeholder-icon';
-                imageIcon.innerHTML = '🖼️';
-                imageIcon.style.fontSize = '2rem';  // Match PowerPoint icon size
-                imageIcon.style.marginBottom = '0.5rem';  // Consistent spacing
-                imagePlaceholder.appendChild(imageIcon);
-                
-                const imageText = document.createElement('p');
-                imageText.textContent = slide.image_prompt;
-                imageText.style.margin = '0';
-                imageText.style.fontStyle = 'italic';
-                imageText.style.fontSize = '0.875rem';  // Match PowerPoint text size
-                imageText.style.color = '#646464';  // Match PowerPoint text color
-                imagePlaceholder.appendChild(imageText);
-                
-                slidePreview.appendChild(imagePlaceholder);
-            }
-            
-            previewContent.appendChild(slidePreview);
-        });
+// Generate HTML preview that matches PowerPoint styling
+function generateHtmlPreview(previewData) {
+    previewContent.innerHTML = '';
+    
+    if (!previewData || !previewData.slides || previewData.slides.length === 0) {
+        previewContent.innerHTML = '<p>No preview data available</p>';
+        return;
     }
     
-    // Open a full-screen PowerPoint-like preview
-    function openFullScreenPreview() {
-        if (!presentationData || !presentationData.preview_data) {
-            showError('Preview data not available');
-            return;
+    // Extract title and template styles with fallbacks
+    const pptTitle = previewData.title || 'Presentation';
+    const titleSlideStyles = previewData.styles?.title_slide || {};
+    const contentSlideStyles = previewData.styles?.content_slide || {};
+    
+    // Create preview section title
+    const previewTitle = document.createElement('h3');
+    previewTitle.className = 'preview-title';
+    previewTitle.textContent = pptTitle;
+    previewContent.appendChild(previewTitle);
+    
+    // Create slides preview
+    previewData.slides.forEach((slide, index) => {
+        const slidePreview = document.createElement('div');
+        slidePreview.className = 'slide-preview';
+        
+        // Apply slide styling based on type
+        const isTitle = slide.type === 'title';
+        const slideStyles = isTitle ? titleSlideStyles : contentSlideStyles;
+        
+        // Apply background color with fallback
+        const bgColor = isTitle ? 
+            (slide.background_color || {r: 240, g: 240, b: 240}) : 
+            (slideStyles.background?.color || {r: 255, g: 255, b: 255});
+        slidePreview.style.backgroundColor = `rgb(${bgColor.r}, ${bgColor.g}, ${bgColor.b})`;
+        
+        // Add slide title with consistent styling and positioning
+        const slideTitle = document.createElement('h4');
+        const titleFont = slideStyles.title_font || {};
+        slideTitle.textContent = slide.title || `Slide ${index + 1}`;
+        
+        // Apply title font styling to match PowerPoint
+        slideTitle.style.position = 'absolute';
+        slideTitle.style.left = isTitle ? '80px' : '40px'; // 1 inch = 80px, 0.5 inch = 40px
+        slideTitle.style.top = isTitle ? '160px' : '40px'; // 2 inch = 160px, 0.5 inch = 40px
+        slideTitle.style.width = isTitle ? '640px' : '720px'; // 8 inch = 640px, 9 inch = 720px
+        if (titleFont.name) slideTitle.style.fontFamily = titleFont.name;
+        if (titleFont.size) slideTitle.style.fontSize = `${titleFont.size}px`;
+        if (titleFont.bold) slideTitle.style.fontWeight = 'bold';
+        const titleColor = isTitle ? 
+            (slide.title_color || {r: 0, g: 0, b: 0}) : 
+            (titleFont.color || {r: 0, g: 0, b: 0});
+        slideTitle.style.color = `rgb(${titleColor.r}, ${titleColor.g}, ${titleColor.b})`;
+        slideTitle.style.textAlign = titleFont.alignment || (isTitle ? 'center' : 'left');
+        
+        slidePreview.appendChild(slideTitle);
+        
+        // Add bullet points for content slides with consistent styling
+        if (!isTitle && slide.points && slide.points.length > 0) {
+            const pointsList = document.createElement('ul');
+            pointsList.style.position = 'absolute';
+            pointsList.style.left = '40px'; // 0.5 inch
+            pointsList.style.top = '120px'; // 1.5 inch
+            pointsList.style.width = '400px'; // 5 inch
+            pointsList.style.paddingLeft = '20px'; // Match PowerPoint bullet indentation
+            
+            slide.points.forEach((point, pointIndex) => {
+                const pointItem = document.createElement('li');
+                pointItem.textContent = point;
+                
+                // Apply styling to match PowerPoint exactly
+                if (slide.points_styling && slide.points_styling[pointIndex]) {
+                    const styling = slide.points_styling[pointIndex];
+                    if (styling.font_name) pointItem.style.fontFamily = styling.font_name;
+                    if (styling.font_size) pointItem.style.fontSize = `${styling.font_size}px`;
+                    pointItem.style.color = `rgb(${styling.color?.r || 50}, ${styling.color?.g || 50}, ${styling.color?.b || 50})`;
+                    pointItem.style.textAlign = styling.alignment || 'left';
+                    pointItem.style.marginBottom = `${styling.space_after || 6}px`;
+                    pointItem.style.marginTop = `${styling.space_before || 6}px`;
+                }
+                
+                pointsList.appendChild(pointItem);
+            });
+            
+            slidePreview.appendChild(pointsList);
         }
         
-        const previewData = presentationData.preview_data;
+        // Add image placeholder with consistent styling and positioning
+        if (slide.has_image && slide.image_prompt && slide.image_style) {
+            const imagePlaceholder = document.createElement('div');
+            imagePlaceholder.className = 'image-placeholder';
+            
+            // Position and size to match PowerPoint (1 inch = 80px)
+            imagePlaceholder.style.position = 'absolute';
+            imagePlaceholder.style.left = `${slide.image_style.left * 80}px`;
+            imagePlaceholder.style.top = `${slide.image_style.top * 80}px`;
+            imagePlaceholder.style.width = `${slide.image_style.width * 80}px`;
+            imagePlaceholder.style.height = `${slide.image_style.height * 80}px`;
+            
+            // Apply styling to match PowerPoint
+            imagePlaceholder.style.backgroundColor = `rgb(${slide.image_style.fill_color?.r || 245}, ${slide.image_style.fill_color?.g || 245}, ${slide.image_style.fill_color?.b || 245})`;
+            imagePlaceholder.style.border = `${slide.image_style.border_width || 1.5}px ${slide.image_style.border_style || 'dashed'} rgb(${slide.image_style.border_color?.r || 200}, ${slide.image_style.border_color?.g || 200}, ${slide.image_style.border_color?.b || 200})`;
+            
+            // Add icon and text
+            const imageIcon = document.createElement('div');
+            imageIcon.className = 'image-placeholder-icon';
+            imageIcon.innerHTML = '🖼️';
+            imageIcon.style.fontSize = '48px';
+            imageIcon.style.marginBottom = '10px';
+            imagePlaceholder.appendChild(imageIcon);
+            
+            const imageText = document.createElement('p');
+            imageText.textContent = slide.image_prompt;
+            imageText.style.margin = '0';
+            imageText.style.fontStyle = 'italic';
+            imageText.style.fontSize = '14px';
+            imageText.style.color = '#646464';
+            imagePlaceholder.appendChild(imageText);
+            
+            slidePreview.appendChild(imagePlaceholder);
+        }
         
-        // Create a full-screen modal for presentation preview
-        const modal = document.createElement('div');
-        modal.className = 'presentation-modal';
-        
-        // Get styles for slides
-        const titleSlideStyles = previewData.styles.title_slide || {};
-        const contentSlideStyles = previewData.styles.content_slide || {};
-        
-        // Create modal content
-        modal.innerHTML = `
-            <div class="presentation-container">
-                <div class="presentation-toolbar">
-                    <button class="close-btn">&times;</button>
-                    <div class="slide-counter">1 / ${previewData.slides.length}</div>
-                    <div class="presentation-controls">
-                        <button class="prev-btn">◀</button>
-                        <button class="next-btn">▶</button>
-                    </div>
-                </div>
-                
-                <div class="presentation-content">
-                    ${previewData.slides.map((slide, index) => {
-                        const isTitle = slide.type === 'title';
-                        const slideStyles = isTitle ? titleSlideStyles : contentSlideStyles;
-                        const background = slideStyles.background || {};
-                        const titleFont = slideStyles.title_font || {};
-                        
-                        // Determine background and text colors
-                        let bgColor = 'white';
-                        if (background.type === 'solid' && background.color) {
-                            const bg = background.color;
-                            bgColor = `rgb(${bg.r}, ${bg.g}, ${bg.b})`;
-                        }
-                        
-                        let titleColor = 'black';
-                        if (titleFont.color) {
-                            const tc = titleFont.color;
-                            titleColor = `rgb(${tc.r}, ${tc.g}, ${tc.b})`;
-                        }
-                        
-                        return `
-                            <div class="presentation-slide ${index === 0 ? 'active' : ''}" style="background-color: ${bgColor}">
-                                <div class="slide-inner ${isTitle ? 'title-slide' : 'content-slide'}">
-                                    <h2 style="color: ${titleColor}; 
-                                              font-family: ${titleFont.name || 'inherit'}; 
-                                              font-size: ${titleFont.size ? (titleFont.size / 14 + 'rem') : 'inherit'};
-                                              font-weight: ${titleFont.bold ? 'bold' : 'normal'};
-                                              text-align: ${titleFont.alignment || 'center'};
-                                              ${isTitle ? 'margin-top: 3rem;' : 'margin-top: 1rem;'}">
-                                        ${slide.title}
-                                    </h2>
-                                    
-                                    ${isTitle ? renderTitleSlideContent(slide) : renderContentSlideContent(slide)}
-                                </div>
-                            </div>
-                        `;
-                    }).join('')}
+        previewContent.appendChild(slidePreview);
+    });
+}
+
+// Open a full-screen PowerPoint-like preview
+function openFullScreenPreview() {
+    if (!presentationData || !presentationData.preview_data) {
+        showError('Preview data not available');
+        return;
+    }
+    
+    const previewData = presentationData.preview_data;
+    
+    // Create a full-screen modal for presentation preview
+    const modal = document.createElement('div');
+    modal.className = 'presentation-modal';
+    
+    // Get styles for slides with fallbacks
+    const titleSlideStyles = previewData.styles?.title_slide || {};
+    const contentSlideStyles = previewData.styles?.content_slide || {};
+    
+    // Create modal content
+    modal.innerHTML = `
+        <div class="presentation-container">
+            <div class="presentation-toolbar">
+                <button class="close-btn">×</button>
+                <div class="slide-counter">1 / ${previewData.slides.length}</div>
+                <div class="presentation-controls">
+                    <button class="prev-btn">◀</button>
+                    <button class="next-btn">▶</button>
                 </div>
             </div>
-        `;
-        
-        // Helper function to render title slide content
-        function renderTitleSlideContent(slide) {
-            let imageHtml = '';
-            if (slide.has_image && slide.image_prompt) {
-                imageHtml = `
-                    <div class="image-placeholder" style="
-                        width: 83%;
-                        margin: 2rem auto;
-                        background-color: #f5f5f5;
-                        border: 1.5px dashed #c8c8c8;
-                        border-radius: 4px;
-                        padding: 2rem 1rem;
-                        text-align: center;
-                    ">
-                        <div class="image-placeholder-icon" style="font-size: 3rem; margin-bottom: 1rem;">🖼️</div>
-                        <p style="margin: 0; font-style: italic; color: #646464;">${slide.image_prompt}</p>
-                    </div>
-                `;
-            }
             
-            return imageHtml;
+            <div class="presentation-content">
+                ${previewData.slides.map((slide, index) => {
+                    const isTitle = slide.type === 'title';
+                    const slideStyles = isTitle ? titleSlideStyles : contentSlideStyles;
+                    const bgColor = isTitle ? 
+                        (slide.background_color || {r: 240, g: 240, b: 240}) : 
+                        (slideStyles.background?.color || {r: 255, g: 255, b: 255});
+                    const titleFont = slideStyles.title_font || {};
+                    const titleColor = isTitle ? 
+                        (slide.title_color || {r: 0, g: 0, b: 0}) : 
+                        (titleFont.color || {r: 0, g: 0, b: 0});
+                    
+                    
+                    
+                    return `
+                        <div class="presentation-slide ${index === 0 ? 'active' : ''}" style="background-color: rgb(${bgColor.r}, ${bgColor.g}, ${bgColor.b})">
+                            <div class="slide-inner ${isTitle ? 'title-slide' : 'content-slide'}">
+                                <h2 style="
+                                    position: absolute;
+                                    left: ${isTitle ? '80px' : '40px'};
+                                    top: ${isTitle ? '160px' : '40px'};
+                                    width: ${isTitle ? '640px' : '720px'};
+                                    color: rgb(${titleColor.r}, ${titleColor.g}, ${titleColor.b});
+                                    font-family: ${titleFont.name || 'inherit'};
+                                    font-size: ${titleFont.size || 44}px;
+                                    font-weight: ${titleFont.bold ? 'bold' : 'normal'};
+                                    text-align: ${titleFont.alignment || (isTitle ? 'center' : 'left')};
+                                ">
+                                    ${slide.title || `Slide ${index + 1}`}
+                                </h2>
+                                
+                                ${isTitle ? renderTitleSlideContent(slide) : renderContentSlideContent(slide)}
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        </div>
+    `;
+    
+    // Helper function to render title slide content
+    function renderTitleSlideContent(slide) {
+        if (slide.has_image && slide.image_prompt && slide.image_style) {
+            return `
+                <div class="image-placeholder" style="
+                    position: absolute;
+                    left: ${slide.image_style.left * 80}px;
+                    top: ${slide.image_style.top * 80}px;
+                    width: ${slide.image_style.width * 80}px;
+                    height: ${slide.image_style.height * 80}px;
+                    background-color: rgb(${slide.image_style.fill_color?.r || 245}, ${slide.image_style.fill_color?.g || 245}, ${slide.image_style.fill_color?.b || 245});
+                    border: ${slide.image_style.border_width || 1.5}px ${slide.image_style.border_style || 'dashed'} rgb(${slide.image_style.border_color?.r || 200}, ${slide.image_style.border_color?.g || 200}, ${slide.image_style.border_color?.b || 200});
+                ">
+                    <div class="image-placeholder-icon" style="font-size: 48px; margin-bottom: 10px;">🖼️</div>
+                    <p style="margin: 0; font-style: italic; font-size: 14px; color: #646464;">${slide.image_prompt}</p>
+                </div>
+            `;
+        }
+        return '';
+    }
+    
+    // Helper function to render content slide content
+    function renderContentSlideContent(slide) {
+        let pointsHtml = '';
+        if (slide.points && slide.points.length > 0) {
+            pointsHtml = `
+                <ul class="slide-points" style="
+                    position: absolute;
+                    left: 40px;
+                    top: 120px;
+                    width: 400px;
+                    padding-left: 20px;
+                ">
+                    ${slide.points.map((point, i) => {
+                        const styling = slide.points_styling && slide.points_styling[i] ? slide.points_styling[i] : {};
+                        const color = styling.color || {r: 50, g: 50, b: 50};
+                        return `
+                            <li style="
+                                font-family: ${styling.font_name || 'inherit'};
+                                font-size: ${styling.font_size || 18}px;
+                                color: rgb(${color.r}, ${color.g}, ${color.b});
+                                text-align: ${styling.alignment || 'left'};
+                                margin-bottom: ${styling.space_after || 6}px;
+                                margin-top: ${styling.space_before || 6}px;
+                            ">
+                                ${point}
+                            </li>
+                        `;
+                    }).join('')}
+                </ul>
+            `;
         }
         
-        // Helper function to render content slide content
-        function renderContentSlideContent(slide) {
-            // Add bullet points with consistent styling
-            let pointsHtml = '';
-            if (slide.points && slide.points.length > 0) {
-                pointsHtml = `
-                    <ul class="slide-points" style="
-                        list-style-type: disc;
-                        padding-left: 2.5rem;
-                        margin: 1.5rem 0;
-                    ">
-                        ${slide.points.map((point, i) => {
-                            let style = '';
-                            if (slide.points_styling && slide.points_styling[i]) {
-                                const styling = slide.points_styling[i];
-                                const color = styling.color || {r: 0, g: 0, b: 0};
-                                
-                                style = `
-                                    font-family: ${styling.font_name || 'inherit'};
-                                    font-size: ${styling.font_size ? (styling.font_size / 14 + 'rem') : 'inherit'};
-                                    color: rgb(${color.r}, ${color.g}, ${color.b});
-                                    text-align: ${styling.alignment || 'left'};
-                                    margin-bottom: 0.75rem;
-                                `;
-                            }
-                            
-                            return `<li style="${style}">${point}</li>`;
-                        }).join('')}
-                    </ul>
-                `;
-            }
-            
-            // Add image placeholder if needed
-            let imageHtml = '';
-        if (slide.has_image && slide.image_prompt) {
-            // Position based on content amount
-            const marginTop = slide.points && slide.points.length > 0 ? '1.5rem' : '3rem';
-            
+        let imageHtml = '';
+        if (slide.has_image && slide.image_prompt && slide.image_style) {
             imageHtml = `
                 <div class="image-placeholder" style="
-                    width: 83%;
-                    margin: ${marginTop} auto 0;
-                    background-color: #f5f5f5;
-                    border: 1.5px dashed #c8c8c8;
-                    border-radius: 4px;
-                    padding: 2rem 1rem;
-                    text-align: center;
+                    position: absolute;
+                    left: ${slide.image_style.left * 80}px;
+                    top: ${slide.image_style.top * 80}px;
+                    width: ${slide.image_style.width * 80}px;
+                    height: ${slide.image_style.height * 80}px;
+                    background-color: rgb(${slide.image_style.fill_color?.r || 245}, ${slide.image_style.fill_color?.g || 245}, ${slide.image_style.fill_color?.b || 245});
+                    border: ${slide.image_style.border_width || 1.5}px ${slide.image_style.border_style || 'dashed'} rgb(${slide.image_style.border_color?.r || 200}, ${slide.image_style.border_color?.g || 200}, ${slide.image_style.border_color?.b || 200});
                 ">
-                    <div class="image-placeholder-icon" style="font-size: 3rem; margin-bottom: 1rem;">🖼️</div>
-                    <p style="margin: 0; font-style: italic; color: #646464;">${slide.image_prompt}</p>
+                    <div class="image-placeholder-icon" style="font-size: 48px; margin-bottom: 10px;">🖼️</div>
+                    <p style="margin: 0; font-style: italic; font-size: 14px; color: #646464;">${slide.image_prompt}</p>
                 </div>
             `;
         }
         
         return pointsHtml + imageHtml;
     }
-        
-        // Add modal to the document
-        document.body.appendChild(modal);
+    
+    // Add modal to the document
+    document.body.appendChild(modal);
     
     // Modal controls
     const closeBtn = modal.querySelector('.close-btn');
@@ -472,8 +440,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const slides = modal.querySelectorAll('.presentation-slide');
     const slideCounter = modal.querySelector('.slide-counter');
     let currentSlide = 0;
-        
-        // Close modal
+    
+    // Close modal
     closeBtn.addEventListener('click', () => {
         document.body.removeChild(modal);
     });
