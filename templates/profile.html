@@ -4,211 +4,457 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Profile - PowerPoint Generator</title>
-    <link rel="stylesheet" href="static/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .user-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 20px;
-            background-color: #2b579a;
-            color: white;
+        :root {
+            --primary-bg: #f8f9fa;
+            --secondary-bg: #ffffff;
+            --card-bg: #ffffff;
+            --primary-text: #333333;
+            --secondary-text: #6c757d;
+            --accent-color: #4361ee;
+            --accent-hover: #3a56d4;
+            --border-color: #dee2e6;
+            --light-color: #f1f3f9;
+            --dark-color: #333;
+            --gray-color: #6c757d;
+            --success-color: #28a745;
+            --success-hover: #218838;
+            --error-color: #dc3545;
+            --shadow: 0 4px 12px rgba(0,0,0,0.05);
+            --card-radius: 12px;
+            --border-radius: 6px;
+            --font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
         }
-        
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--primary-bg);
+            color: var(--primary-text);
+            font-family: var(--font-family);
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            grid-template-rows: 60px 1fr;
+            grid-template-areas: 
+                "header"
+                "main";
+            height: 100vh;
+        }
+
+        .user-header {
+            grid-area: header;
+            background-color: var(--secondary-bg);
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.5rem;
+            z-index: 10;
+            border-bottom: 1px solid var(--border-color);
+            height: 60px;
+        }
+
+        .app-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--accent-color);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
         .user-navigation {
             display: flex;
-            gap: 20px;
             align-items: center;
+            gap: 1.5rem;
         }
         
         .user-navigation a {
-            color: white;
             text-decoration: none;
-            padding: 8px 12px;
+            color: var(--dark-color);
+            font-size: 0.9rem;
+            padding: 0.4rem 0.8rem;
             border-radius: 4px;
-            transition: background-color 0.3s;
+            transition: all 0.2s;
         }
         
         .user-navigation a:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-        }
-
-        .user-navigation a.active {
-            background-color: rgba(255, 255, 255, 0.2);
+            background-color: var(--light-color);
         }
         
-        .user-info {
+        .user-navigation a.active {
+            color: var(--accent-color);
+            font-weight: 500;
+            background-color: rgba(67, 97, 238, 0.1);
+        }
+
+        .user-profile {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 0.8rem;
+            padding: 0.4rem 0.8rem;
+            border-radius: 4px;
+            background-color: var(--light-color);
         }
         
         .user-avatar {
             width: 32px;
             height: 32px;
+            background-color: var(--accent-color);
+            color: white;
             border-radius: 50%;
-            background-color: #1e3f7a;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: bold;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .logout-link {
+            display: flex;
+            align-items: center;
+            color: var(--secondary-text);
+            transition: color 0.2s;
+        }
+
+        .logout-link:hover {
+            color: var(--error-color);
+        }
+
+        .main-content {
+            grid-area: main;
+            padding: 1rem;
+            overflow-y: auto;
+            background-color: var(--primary-bg);
         }
         
         .profile-container {
-            max-width: 800px;
-            margin: 40px auto;
-            padding: 20px;
-            background-color: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0;
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 2rem;
         }
-        
+
+        .profile-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .profile-main {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
         .profile-header {
             text-align: center;
-            margin-bottom: 30px;
+            background-color: var(--card-bg);
+            border-radius: var(--card-radius);
+            padding: 2.5rem 1.5rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            position: relative;
+            height: fit-content;
         }
         
         .profile-avatar {
             width: 100px;
             height: 100px;
             border-radius: 50%;
-            background-color: #2b579a;
-            margin: 0 auto 20px;
+            background-color: var(--accent-color);
+            margin: 0 auto 1.5rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 40px;
+            font-size: 2.5rem;
             color: white;
+            box-shadow: 0 5px 15px rgba(67, 97, 238, 0.2);
         }
         
-        .profile-info {
-            margin-bottom: 30px;
+        .profile-header h1 {
+            font-size: 1.8rem;
+            color: var(--primary-text);
+            margin-bottom: 0.5rem;
+        }
+        
+        .profile-header p {
+            color: var(--secondary-text);
+            font-size: 1rem;
+        }
+        
+        .profile-card {
+            background-color: var(--card-bg);
+            border-radius: var(--card-radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+        }
+        
+        .profile-card h2 {
+            font-size: 1.4rem;
+            color: var(--accent-color);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
         }
         
         .info-row {
             display: flex;
-            border-bottom: 1px solid #eee;
-            padding: 15px 0;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .info-row:last-child {
+            border-bottom: none;
         }
         
         .info-label {
-            flex: 0 0 150px;
-            font-weight: 600;
-            color: #555;
+            flex: 0 0 180px;
+            font-weight: 500;
+            color: var(--dark-color);
         }
         
         .info-value {
             flex: 1;
-        }
-        
-        .stats-section {
-            background-color: #f8f9fa;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 30px;
-        }
-        
-        .stats-title {
-            font-size: 18px;
-            margin-bottom: 15px;
+            color: var(--secondary-text);
         }
         
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
         }
         
         .stat-card {
-            background-color: white;
-            border-radius: 8px;
-            padding: 15px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            background-color: var(--light-color);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
             text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow);
+            background-color: var(--secondary-bg);
         }
         
         .stat-value {
-            font-size: 24px;
-            font-weight: bold;
-            color: #2b579a;
-            margin-bottom: 5px;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-color);
+            margin-bottom: 0.5rem;
         }
         
         .stat-label {
-            color: #666;
-            font-size: 14px;
+            color: var(--secondary-text);
+            font-size: 0.9rem;
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            font-size: 1rem;
+            border: none;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+        
+        .btn-primary {
+            background-color: var(--accent-color);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(67, 97, 238, 0.2);
+        }
+        
+        .actions-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 2rem;
+            gap: 1rem;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--secondary-text);
+            font-size: 0.9rem;
+            border-top: 1px solid var(--border-color);
+            margin-top: 2rem;
+        }
+        
+        @media (max-width: 992px) {
+            .profile-container {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+            
+            .profile-header {
+                padding: 2rem 1rem;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .info-row {
+                flex-direction: column;
+            }
+            
+            .info-label {
+                margin-bottom: 0.5rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .flex {
+            display: flex;
+        }
+
+        .items-center {
+            align-items: center;
+        }
+
+        .gap-2 {
+            gap: 0.5rem;
         }
     </style>
 </head>
 <body>
-    <!-- User Header with Navigation -->
-    <div class="user-header">
-        <div class="logo">
-            <h2>PowerPoint Generator</h2>
-        </div>
-        <div class="user-navigation">
-            <a href="/dashboard"><i class="fas fa-home"></i> Dashboard</a>
-            <a href="/profile" class="active"><i class="fas fa-user"></i> Profile</a>
-            <div class="user-info">
-                <div class="user-avatar">
-                    {{ user.username[0].upper() if user.username else "?" }}
+    <div class="layout">
+        <!-- User Header -->
+        <div class="user-header">
+            <div class="flex items-center">
+                <h2 class="app-title"><i class="fas fa-chart-bar"></i> PowerPoint Generator</h2>
+            </div>
+            <div class="user-navigation">
+                <a href="/dashboard"><i class="fas fa-home"></i> Dashboard</a>
+                <a href="/profile" class="active"><i class="fas fa-user"></i> Profile</a>
+                <div class="user-profile">
+                    <div class="user-avatar">
+                        {{ user.username[0].upper() if user.username else "?" }}
+                    </div>
+                    <span>{{ user.username }}</span>
+                    <a href="/logout" class="ml-2 logout-link" title="Logout">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </a>
                 </div>
-                <span>{{ user.username }}</span>
-                <a href="/logout" title="Logout"><i class="fas fa-sign-out-alt"></i></a>
             </div>
         </div>
-    </div>
-    
-    <div class="profile-container">
-        <div class="profile-header">
-            <div class="profile-avatar">
-                {{ user.username[0].upper() if user.username else "?" }}
-            </div>
-            <h1>{{ user.username }}</h1>
-        </div>
-        
-        <div class="profile-info">
-            <h2>Account Information</h2>
-            
-            <div class="info-row">
-                <div class="info-label">Username</div>
-                <div class="info-value">{{ user.username }}</div>
-            </div>
-            
-            <div class="info-row">
-                <div class="info-label">Email</div>
-                <div class="info-value">{{ user.email }}</div>
-            </div>
-            
-            <div class="info-row">
-                <div class="info-label">Account Created</div>
-                <div class="info-value">{{ user.created_at }}</div>
-            </div>
-        </div>
-        
-        <div class="stats-section">
-            <h3 class="stats-title">Your Statistics</h3>
-            
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-value">{{ presentation_count }}</div>
-                    <div class="stat-label">Total Presentations</div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="profile-container">
+                <!-- Left Sidebar - User Profile -->
+                <div class="profile-sidebar">
+                    <div class="profile-header">
+                        <div class="profile-avatar">
+                            {{ user.username[0].upper() if user.username else "?" }}
+                        </div>
+                        <h1>{{ user.username }}</h1>
+                        <p>Member since {{ user.created_at }}</p>
+                        
+                        <div class="actions-container" style="margin-top: 1.5rem;">
+                            <a href="/dashboard" class="btn btn-primary" style="width: 100%;">
+                                <i class="fas fa-plus"></i> New Presentation
+                            </a>
+                        </div>
+                    </div>
                 </div>
                 
-                <!-- Could add more stat cards in the future -->
+                <!-- Right Main Content - Account Info and Stats -->
+                <div class="profile-main">
+                    <div class="profile-card">
+                        <h2><i class="fas fa-user-circle"></i> Account Information</h2>
+                        
+                        <div class="info-row">
+                            <div class="info-label">Username</div>
+                            <div class="info-value">{{ user.username }}</div>
+                        </div>
+                        
+                        <div class="info-row">
+                            <div class="info-label">Email</div>
+                            <div class="info-value">{{ user.email }}</div>
+                        </div>
+                        
+                        <div class="info-row">
+                            <div class="info-label">Account Created</div>
+                            <div class="info-value">{{ user.created_at }}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="profile-card">
+                        <h2><i class="fas fa-chart-line"></i> Your Statistics</h2>
+                        
+                        <!-- Graph visualization -->
+                        <div style="margin-bottom: 1.5rem; height: 200px; background-color: var(--light-color); border-radius: var(--border-radius); display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden;">
+                            <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: flex-end; padding: 1rem;">
+                                <div style="flex: 1; height: 30%; background-color: rgba(67, 97, 238, 0.7); margin: 0 5px; border-radius: 4px 4px 0 0;"></div>
+                                <div style="flex: 1; height: 45%; background-color: rgba(67, 97, 238, 0.7); margin: 0 5px; border-radius: 4px 4px 0 0;"></div>
+                                <div style="flex: 1; height: 60%; background-color: rgba(67, 97, 238, 0.7); margin: 0 5px; border-radius: 4px 4px 0 0;"></div>
+                                <div style="flex: 1; height: 40%; background-color: rgba(67, 97, 238, 0.7); margin: 0 5px; border-radius: 4px 4px 0 0;"></div>
+                                <div style="flex: 1; height: 70%; background-color: rgba(67, 97, 238, 0.7); margin: 0 5px; border-radius: 4px 4px 0 0;"></div>
+                                <div style="flex: 1; height: 50%; background-color: rgba(67, 97, 238, 0.7); margin: 0 5px; border-radius: 4px 4px 0 0;"></div>
+                            </div>
+                            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0.1)); pointer-events: none;"></div>
+                        </div>
+                        
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-value">{{ presentation_count }}</div>
+                                <div class="stat-label">Total Presentations</div>
+                            </div>
+                            
+                            <div class="stat-card">
+                                <div class="stat-value">6</div>
+                                <div class="stat-label">This Month</div>
+                            </div>
+                            
+                            <div class="stat-card">
+                                <div class="stat-value">2</div>
+                                <div class="stat-label">This Week</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
-        
-        <div class="button-group" style="text-align: center;">
-            <a href="/dashboard" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Create New Presentation
-            </a>
         </div>
     </div>
     
     <footer>
-        <p>Powered by Local Ollama | Created with Flask and Python-PPTX</p>
+        Powered by Local Ollama | Created with Flask and Python-PPTX
     </footer>
 </body>
 </html>

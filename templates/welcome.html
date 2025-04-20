@@ -7,13 +7,24 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --primary-color: #2b579a;
-            --secondary-color: #1e3f7a;
-            --accent-color: #4472c4;
-            --light-bg: #f5f7fb;
-            --white: #ffffff;
-            --text-dark: #333333;
-            --text-light: #666666;
+            --primary-bg: #f8f9fa;
+            --secondary-bg: #ffffff;
+            --card-bg: #ffffff;
+            --primary-text: #333333;
+            --secondary-text: #6c757d;
+            --accent-color: #4361ee;
+            --accent-hover: #3a56d4;
+            --border-color: #dee2e6;
+            --light-color: #f1f3f9;
+            --dark-color: #333;
+            --gray-color: #6c757d;
+            --success-color: #28a745;
+            --success-hover: #218838;
+            --error-color: #dc3545;
+            --shadow: 0 4px 12px rgba(0,0,0,0.05);
+            --card-radius: 12px;
+            --border-radius: 6px;
+            --font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
         }
         
         * {
@@ -23,23 +34,34 @@
         }
         
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: var(--text-dark);
+            font-family: var(--font-family);
+            color: var(--primary-text);
             line-height: 1.6;
+            background-color: var(--primary-bg);
         }
         
         .header {
-            background-color: var(--primary-color);
-            color: var(--white);
+            background-color: var(--secondary-bg);
+            color: var(--primary-text);
             padding: 1rem 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            box-shadow: var(--shadow);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            height: 60px;
         }
         
         .logo {
-            font-size: 1.5rem;
-            font-weight: bold;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--accent-color);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
         
         .auth-buttons {
@@ -48,56 +70,70 @@
         }
         
         .btn {
-            display: inline-block;
-            padding: 0.6rem 1.2rem;
-            border-radius: 4px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--border-radius);
             text-decoration: none;
             font-weight: 500;
             transition: all 0.3s ease;
             cursor: pointer;
+            gap: 0.5rem;
+            font-size: 0.9rem;
         }
         
         .btn-primary {
             background-color: var(--accent-color);
-            color: var(--white);
+            color: white;
             border: none;
         }
         
         .btn-primary:hover {
-            background-color: var(--secondary-color);
+            background-color: var(--accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(67, 97, 238, 0.2);
         }
         
         .btn-outline {
             background-color: transparent;
-            color: var(--white);
-            border: 1px solid var(--white);
+            color: var(--accent-color);
+            border: 1px solid var(--accent-color);
         }
         
         .btn-outline:hover {
-            background-color: rgba(255, 255, 255, 0.1);
+            background-color: rgba(67, 97, 238, 0.05);
+            transform: translateY(-2px);
         }
         
         .hero {
-            background: linear-gradient(to right, var(--primary-color), var(--accent-color));
-            color: var(--white);
-            padding: 5rem 2rem;
+            background: linear-gradient(135deg, rgba(67, 97, 238, 0.05), rgba(67, 97, 238, 0.1));
+            color: var(--primary-text);
+            padding: 8rem 2rem 5rem;
             text-align: center;
+        }
+        
+        .hero-content {
+            max-width: 1200px;
+            margin: 0 auto;
         }
         
         .hero h1 {
             font-size: 2.5rem;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
+            color: var(--accent-color);
         }
         
         .hero p {
             font-size: 1.2rem;
             max-width: 800px;
-            margin: 0 auto 2rem;
+            margin: 0 auto 2.5rem;
+            color: var(--secondary-text);
         }
         
         .features {
             padding: 5rem 2rem;
-            background-color: var(--light-bg);
+            background-color: var(--secondary-bg);
         }
         
         .section-title {
@@ -108,13 +144,14 @@
         .section-title h2 {
             font-size: 2rem;
             margin-bottom: 1rem;
-            color: var(--primary-color);
+            color: var(--accent-color);
         }
         
         .section-title p {
-            color: var(--text-light);
+            color: var(--secondary-text);
             max-width: 700px;
             margin: 0 auto;
+            font-size: 1.1rem;
         }
         
         .feature-grid {
@@ -126,19 +163,21 @@
         }
         
         .feature-card {
-            background-color: var(--white);
-            border-radius: 8px;
+            background-color: var(--card-bg);
+            border-radius: var(--card-radius);
             padding: 2rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+            border: 1px solid var(--border-color);
         }
         
         .feature-card:hover {
             transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
         }
         
         .feature-icon {
-            background-color: rgba(68, 114, 196, 0.1);
+            background-color: rgba(67, 97, 238, 0.1);
             width: 60px;
             height: 60px;
             border-radius: 50%;
@@ -146,18 +185,19 @@
             align-items: center;
             justify-content: center;
             margin-bottom: 1.5rem;
-            color: var(--primary-color);
+            color: var(--accent-color);
             font-size: 1.5rem;
         }
         
         .feature-card h3 {
             margin-bottom: 1rem;
-            color: var(--primary-color);
+            color: var(--accent-color);
+            font-size: 1.3rem;
         }
         
         .how-it-works {
             padding: 5rem 2rem;
-            background-color: var(--white);
+            background-color: var(--primary-bg);
         }
         
         .steps {
@@ -177,8 +217,8 @@
         }
         
         .step-number {
-            background-color: var(--primary-color);
-            color: var(--white);
+            background-color: var(--accent-color);
+            color: white;
             width: 40px;
             height: 40px;
             border-radius: 50%;
@@ -188,15 +228,26 @@
             font-weight: bold;
             margin-right: 1.5rem;
             flex-shrink: 0;
+            box-shadow: 0 4px 8px rgba(67, 97, 238, 0.2);
         }
         
         .step-content {
             flex: 1;
+            background-color: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: var(--card-radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            transition: transform 0.3s ease;
+        }
+        
+        .step-content:hover {
+            transform: translateX(5px);
         }
         
         .step-content h3 {
             margin-bottom: 0.5rem;
-            color: var(--primary-color);
+            color: var(--accent-color);
         }
         
         .step:not(:last-child)::after {
@@ -205,13 +256,13 @@
             top: 40px;
             left: 20px;
             width: 2px;
-            height: calc(100% - 20px);
-            background-color: #e0e0e0;
+            height: calc(100% - 30px);
+            background-color: rgba(67, 97, 238, 0.2);
         }
         
         .cta {
-            background-color: var(--primary-color);
-            color: var(--white);
+            background: linear-gradient(135deg, var(--accent-color), #5e7bf9);
+            color: white;
             padding: 5rem 2rem;
             text-align: center;
         }
@@ -225,6 +276,7 @@
             max-width: 700px;
             margin: 0 auto 2rem;
             font-size: 1.1rem;
+            opacity: 0.9;
         }
         
         .cta-buttons {
@@ -234,25 +286,70 @@
             flex-wrap: wrap;
         }
         
+        .btn-light {
+            background-color: white;
+            color: var(--accent-color);
+        }
+        
+        .btn-light:hover {
+            background-color: rgba(255,255,255,0.9);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .btn-outline-light {
+            background-color: transparent;
+            color: white;
+            border: 1px solid white;
+        }
+        
+        .btn-outline-light:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+        
         .btn-large {
-            padding: 0.8rem 2rem;
-            font-size: 1.1rem;
+            padding: 0.9rem 2.2rem;
+            font-size: 1rem;
         }
         
         footer {
-            background-color: var(--secondary-color);
-            color: var(--white);
+            background-color: var(--secondary-bg);
+            color: var(--secondary-text);
             padding: 2rem;
             text-align: center;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        @media (max-width: 992px) {
+            .hero h1 {
+                font-size: 2.2rem;
+            }
+            
+            .feature-grid {
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 1.5rem;
+            }
         }
         
         @media (max-width: 768px) {
+            .hero {
+                padding: 7rem 1.5rem 4rem;
+            }
+            
             .hero h1 {
-                font-size: 2rem;
+                font-size: 1.8rem;
             }
             
             .feature-grid {
                 grid-template-columns: 1fr;
+                max-width: 500px;
+                margin: 0 auto;
             }
             
             .step {
@@ -264,25 +361,69 @@
                 margin-bottom: 1rem;
             }
             
+            .step-content {
+                width: 100%;
+            }
+            
             .step:not(:last-child)::after {
                 display: none;
+            }
+            
+            .section-title h2 {
+                font-size: 1.6rem;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .header {
+                padding: 1rem;
+            }
+            
+            .auth-buttons {
+                gap: 0.5rem;
+            }
+            
+            .btn {
+                padding: 0.6rem 1rem;
+            }
+            
+            .hero h1 {
+                font-size: 1.6rem;
+            }
+            
+            .hero p {
+                font-size: 1rem;
+            }
+            
+            .btn-large {
+                padding: 0.75rem 1.5rem;
             }
         }
     </style>
 </head>
 <body>
     <header class="header">
-        <div class="logo">PowerPoint Generator</div>
+        <div class="logo">
+            <i class="fas fa-chart-bar"></i> PowerPoint Generator
+        </div>
         <div class="auth-buttons">
-            <a href="/login" class="btn btn-outline">Log In</a>
-            <a href="/register" class="btn btn-primary">Sign Up</a>
+            <a href="/login" class="btn btn-outline">
+                <i class="fas fa-sign-in-alt"></i> Log In
+            </a>
+            <a href="/register" class="btn btn-primary">
+                <i class="fas fa-user-plus"></i> Sign Up
+            </a>
         </div>
     </header>
     
     <section class="hero">
-        <h1>Generate Professional Presentations in Minutes</h1>
-        <p>Use the power of AI to create beautiful, content-rich PowerPoint presentations with just a few clicks. Save time and deliver impressive presentations without the hassle.</p>
-        <a href="/register" class="btn btn-primary btn-large">Get Started for Free</a>
+        <div class="hero-content">
+            <h1>Generate Professional Presentations in Minutes</h1>
+            <p>Use the power of AI to create beautiful, content-rich PowerPoint presentations with just a few clicks. Save time and deliver impressive presentations without the hassle.</p>
+            <a href="/register" class="btn btn-primary btn-large">
+                <i class="fas fa-rocket"></i> Get Started for Free
+            </a>
+        </div>
     </section>
     
     <section class="features">
@@ -395,13 +536,19 @@
         <h2>Ready to Create Amazing Presentations?</h2>
         <p>Join thousands of users who are saving time and creating professional presentations with our AI-powered tool.</p>
         <div class="cta-buttons">
-            <a href="/register" class="btn btn-primary btn-large">Sign Up Now</a>
-            <a href="/login" class="btn btn-outline btn-large">Log In</a>
+            <a href="/register" class="btn btn-light btn-large">
+                <i class="fas fa-user-plus"></i> Sign Up Now
+            </a>
+            <a href="/login" class="btn btn-outline-light btn-large">
+                <i class="fas fa-sign-in-alt"></i> Log In
+            </a>
         </div>
     </section>
     
     <footer>
-        <p>© 2025 PowerPoint Generator | Powered by Local Ollama | Created with Flask and Python-PPTX</p>
+        <div class="footer-content">
+            <p>© 2025 PowerPoint Generator | Powered by Local Ollama | Created with Flask and Python-PPTX</p>
+        </div>
     </footer>
 </body>
 </html>

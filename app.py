@@ -170,6 +170,8 @@ def logout():
 
 
 
+from datetime import datetime
+
 @app.route('/dashboard')
 @login_required
 def dashboard():
@@ -179,7 +181,20 @@ def dashboard():
     c.execute('SELECT * FROM presentations WHERE user_id = ? ORDER BY created_at DESC', (session['user_id'],))
     presentations = c.fetchall()
     conn.close()
-    
+
+    # Convert 'created_at' from string to datetime object
+    presentation_list = []
+    for pres in presentations:
+        # Convert sqlite3.Row to dictionary
+        pres_dict = dict(pres)  # Convert to a dictionary for mutability
+
+        # If 'created_at' is a string, convert it to a datetime object
+        if isinstance(pres_dict['created_at'], str):
+            pres_dict['created_at'] = datetime.strptime(pres_dict['created_at'], "%Y-%m-%d %H:%M:%S")
+        
+        # Add the modified presentation to the new list
+        presentation_list.append(pres_dict)
+
     # Get all available templates
     templates = template_manager.get_all_templates()
     template_list = []
@@ -193,7 +208,7 @@ def dashboard():
     
     return render_template('dashboard.html', 
                           username=session['username'], 
-                          presentations=presentations,
+                          presentations=presentation_list,
                           templates=template_list)
 
 # @app.route('/profile')
