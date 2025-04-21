@@ -13,17 +13,162 @@ document.addEventListener('DOMContentLoaded', function() {
     const previewContent = document.getElementById('preview-content');
     const editorSection = document.getElementById('editor-section');
     const resultSection = document.getElementById('result');
-    const downloadLink = document.getElementById('download-link');
+    const downloadLink = document.getElementById('download-btn');
     const errorSection = document.getElementById('error');
     const errorMessage = document.getElementById('error-message');
     const tryAgainBtn = document.getElementById('try-again-btn');
-    const statusMessage = document.querySelector('.status-message');
-    const downloadBtn = document.getElementById('download-btn');
-    const editBtn = document.getElementById('edit-btn');
+    const statusMessage = document.querySelector('.progress-status');
+    // const downloadBtn = document.getElementById('download-btn');
+    const editBtn = document.getElementById('edit-content-btn');
     const presentationPreviewBtn = document.getElementById('presentation-preview-btn');
     const saveChangesBtn = document.getElementById('save-changes-btn');
     const cancelEditBtn = document.getElementById('cancel-edit-btn');
+    // Add these event listeners after your existing DOMContentLoaded setup
+
+// Handle content type switching
+const contentTypeSelector = document.getElementById('content-type');
+const autoGenerateSection = document.getElementById('auto-generate-section');
+const customContentSection = document.getElementById('custom-content-section');
+
+if (contentTypeSelector) {
+    contentTypeSelector.addEventListener('change', function() {
+        const selectedType = this.value;
+        
+        if (selectedType === 'auto_generate') {
+            autoGenerateSection.classList.remove('hidden');
+            customContentSection.classList.add('hidden');
+        } else if (selectedType === 'custom') {
+            autoGenerateSection.classList.add('hidden');
+            customContentSection.classList.remove('hidden');
+        }
+    });
+}
+
+// Update your form submission logic
+form.addEventListener('submit', async function(e) {
+    e.preventDefault();
     
+    // Get content type
+    const contentType = contentTypeSelector ? contentTypeSelector.value : 'auto_generate';
+    
+    // Validation and payload preparation
+    const payload = {
+        template: selectedTemplate.id,
+        content_type: contentType
+    };
+    
+    if (contentType === 'auto_generate') {
+        const topic = document.getElementById('topic').value.trim();
+        const numSlides = parseInt(document.getElementById('num_slides').value, 10);
+        
+        if (!topic) {
+            showError('Please enter a presentation topic');
+            return;
+        }
+        if (isNaN(numSlides) || numSlides < 1 || numSlides > 20) {
+            showError('Number of slides must be between 1 and 20');
+            return;
+        }
+        
+        payload.topic = topic;
+        payload.num_slides = numSlides;
+    } else if (contentType === 'custom') {
+        const customContent = document.getElementById('custom-content').value.trim();
+        const customTitle = document.getElementById('custom-title').value.trim();
+        
+        if (!customContent) {
+            showError('Please enter your presentation content');
+            return;
+        }
+        
+        payload.custom_content = customContent;
+        payload.custom_title = customTitle;
+    }
+    
+    if (!selectedTemplate) {
+        showError('Please select a template');
+        return;
+    }
+    
+    // Submit form
+    contentFormSection.classList.add('hidden');
+    loadingSection.classList.remove('hidden');
+    generateBtn.disabled = true;
+    currentStatusIndex = 0;
+    updateStatus(statusMessages[currentStatusIndex]);
+    statusInterval = setInterval(cycleStatusMessages, 3000);
+    
+    try {
+        const response = await fetch('/generate_ppt', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload)
+        });
+        
+        clearInterval(statusInterval);
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to generate presentation');
+        }
+        
+        const data = await response.json();
+        presentationData = {
+            content: data.content,
+            image_prompts: data.image_prompts,
+            template: data.template,
+            preview_data: data.preview_data,
+            download_url: data.download_url,
+            filename: data.filename
+        };
+        
+        updateStatus('Presentation ready!');
+        generateHtmlPreview(presentationData.preview_data);
+        downloadLink.href = data.download_url;
+        downloadLink.setAttribute('download', data.filename);
+        loadingSection.classList.add('hidden');
+        previewSection.classList.remove('hidden');
+    } catch (error) {
+        clearInterval(statusInterval);
+        console.error('Error generating presentation:', error);
+        showError(error.message || 'An unexpected error occurred');
+    } finally {
+        generateBtn.disabled = false;
+    }
+});
+
+// Add custom CSS for content format help section
+const style = document.createElement('style');
+style.textContent = `
+.content-format-help {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+}
+
+.content-format-help pre {
+    background: #fff;
+    border-radius: 4px;
+    padding: 10px;
+    font-size: 0.8rem;
+    border: 1px solid #dee2e6;
+}
+
+.content-format-help code {
+    background: #fff;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-size: 0.8rem;
+    border: 1px solid #dee2e6;
+}
+`;
+document.head.appendChild(style);
+
+
     let presentationData = null;
     let selectedTemplate = null;
     
@@ -54,187 +199,262 @@ document.addEventListener('DOMContentLoaded', function() {
         templateSelectionSection.classList.remove('hidden');
     });
     
-    form.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const topic = document.getElementById('topic').value.trim();
-        const numSlides = parseInt(document.getElementById('num_slides').value, 10);
-        if (!topic) {
-            showError('Please enter a presentation topic');
-            return;
-        }
-        if (isNaN(numSlides) || numSlides < 1 || numSlides > 20) {
-            showError('Number of slides must be between 1 and 20');
-            return;
-        }
-        if (!selectedTemplate) {
-            showError('Please select a template');
-            return;
-        }
-        contentFormSection.classList.add('hidden');
-        loadingSection.classList.remove('hidden');
-        generateBtn.disabled = true;
-        currentStatusIndex = 0;
-        updateStatus(statusMessages[currentStatusIndex]);
-        statusInterval = setInterval(cycleStatusMessages, 3000);
-        try {
-            const response = await fetch('/generate_ppt', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    topic: topic,
-                    num_slides: numSlides,
-                    template: selectedTemplate.id
-                })
-            });
-            clearInterval(statusInterval);
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to generate presentation');
-            }
-            const data = await response.json();
-            presentationData = {
-                content: data.content,
-                image_prompts: data.image_prompts,
-                template: data.template,
-                preview_data: data.preview_data,
-                download_url: data.download_url,
-                filename: data.filename
-            };
-            updateStatus('Presentation ready!');
-            generateHtmlPreview(presentationData.preview_data);
-            downloadLink.href = data.download_url;
-            downloadLink.setAttribute('download', data.filename);
-            loadingSection.classList.add('hidden');
-            previewSection.classList.remove('hidden');
-        } catch (error) {
-            clearInterval(statusInterval);
-            console.error('Error generating presentation:', error);
-            showError(error.message || 'An unexpected error occurred');
-        } finally {
-            generateBtn.disabled = false;
-        }
-    });
+    // form.addEventListener('submit', async function(e) {
+    //     e.preventDefault();
+    //     const topic = document.getElementById('topic').value.trim();
+    //     const numSlides = parseInt(document.getElementById('num_slides').value, 10);
+    //     if (!topic) {
+    //         showError('Please enter a presentation topic');
+    //         return;
+    //     }
+    //     if (isNaN(numSlides) || numSlides < 1 || numSlides > 20) {
+    //         showError('Number of slides must be between 1 and 20');
+    //         return;
+    //     }
+    //     if (!selectedTemplate) {
+    //         showError('Please select a template');
+    //         return;
+    //     }
+    //     contentFormSection.classList.add('hidden');
+    //     loadingSection.classList.remove('hidden');
+    //     generateBtn.disabled = true;
+    //     currentStatusIndex = 0;
+    //     updateStatus(statusMessages[currentStatusIndex]);
+    //     statusInterval = setInterval(cycleStatusMessages, 3000);
+    //     try {
+    //         const response = await fetch('/generate_ppt', {
+    //             method: 'POST',
+    //             headers: {
+    //                 'Content-Type': 'application/json',
+    //             },
+    //             body: JSON.stringify({
+    //                 topic: topic,
+    //                 num_slides: numSlides,
+    //                 template: selectedTemplate.id
+    //             })
+    //         });
+    //         clearInterval(statusInterval);
+    //         if (!response.ok) {
+    //             const errorData = await response.json();
+    //             throw new Error(errorData.error || 'Failed to generate presentation');
+    //         }
+    //         const data = await response.json();
+    //         presentationData = {
+    //             content: data.content,
+    //             image_prompts: data.image_prompts,
+    //             template: data.template,
+    //             preview_data: data.preview_data,
+    //             download_url: data.download_url,
+    //             filename: data.filename
+    //         };
+    //         updateStatus('Presentation ready!');
+    //         generateHtmlPreview(presentationData.preview_data);
+    //         downloadLink.href = data.download_url;
+    //         downloadLink.setAttribute('download', data.filename);
+    //         loadingSection.classList.add('hidden');
+    //         previewSection.classList.remove('hidden');
+    //     } catch (error) {
+    //         clearInterval(statusInterval);
+    //         console.error('Error generating presentation:', error);
+    //         showError(error.message || 'An unexpected error occurred');
+    //     } finally {
+    //         generateBtn.disabled = false;
+    //     }
+    // });
     
     function generateHtmlPreview(previewData) {
-        previewContent.innerHTML = '';
+        const previewContent = document.getElementById('ppt-preview');
+        if (!previewContent) {
+            console.error('Preview content container not found. Looking for element with ID "ppt-preview"');
+            return;
+        }
+        
+        previewContent.innerHTML = ''; // Clear existing content
+        
         if (!previewData || !previewData.slides || previewData.slides.length === 0) {
             previewContent.innerHTML = '<p>No preview data available</p>';
             return;
         }
-        const pptTitle = previewData.title || 'Presentation';
-        const titleSlideStyles = previewData.styles?.title_slide || {};
-        const contentSlideStyles = previewData.styles?.content_slide || {};
-        const imageSlideStyles = previewData.styles?.image_slide || {};
+    
+        // Add presentation title
+        const presentationTitle = document.createElement('h3');
+        presentationTitle.className = 'preview-title';
+        presentationTitle.style.textAlign = 'center';
+        presentationTitle.style.marginBottom = '20px';
+        presentationTitle.textContent = previewData.title || 'Presentation';
+        previewContent.appendChild(presentationTitle);
         
-        const previewTitle = document.createElement('h3');
-        previewTitle.className = 'preview-title';
-        previewTitle.textContent = pptTitle;
-        previewContent.appendChild(previewTitle);
+        // Add slide container
+        const slidesContainer = document.createElement('div');
+        slidesContainer.className = 'preview-slides';
+        previewContent.appendChild(slidesContainer);
         
+        // Create slides
         previewData.slides.forEach((slide, index) => {
-            const slidePreview = document.createElement('div');
-            slidePreview.className = 'slide-preview';
+            const slideDiv = document.createElement('div');
+            slideDiv.className = 'slide';
+            slideDiv.style.position = 'relative';
+            slideDiv.style.width = '100%';
+            slideDiv.style.height = '0';
+            slideDiv.style.paddingBottom = '75%'; // 4:3 aspect ratio
+            slideDiv.style.marginBottom = '30px';
+            slideDiv.style.border = '1px solid #dee2e6';
+            slideDiv.style.borderRadius = '8px';
+            slideDiv.style.overflow = 'hidden';
+            slideDiv.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+            
+            // Slide content container
+            const slideContent = document.createElement('div');
+            slideContent.style.position = 'absolute';
+            slideContent.style.top = '0';
+            slideContent.style.left = '0';
+            slideContent.style.width = '100%';
+            slideContent.style.height = '100%';
+            slideContent.style.padding = '30px';
+            slideContent.style.boxSizing = 'border-box';
+            
+            // Apply background
             const isTitle = slide.type === 'title';
-            const slideStyles = isTitle ? titleSlideStyles : contentSlideStyles;
+            const slideStyles = isTitle ? 
+                previewData.styles?.title_slide || {} : 
+                previewData.styles?.content_slide || {};
             const bgSettings = slideStyles.background || {};
             const bgImage = slideStyles.background_image || '';
+            
             if (bgImage) {
-                const img = new Image();
-                img.src = `/static/${bgImage}`;
-                img.onload = () => {
-                    console.log(`Background image loaded for slide ${index + 1}: /static/${bgImage}`);
-                    slidePreview.style.backgroundImage = `url('/static/${bgImage}')`;
-                    slidePreview.style.backgroundSize = 'cover';
-                    slidePreview.style.backgroundPosition = 'center';
-                };
-                img.onerror = () => {
-                    console.error(`Failed to load background image for slide ${index + 1}: /static/${bgImage}`);
-                    applyFallbackBackground(slidePreview, bgSettings, isTitle);
-                };
+                slideContent.style.backgroundImage = `url('/static/${bgImage}')`;
+                slideContent.style.backgroundSize = 'cover';
+                slideContent.style.backgroundPosition = 'center';
             } else {
-                applyFallbackBackground(slidePreview, bgSettings, isTitle);
+                applyFallbackBackground(slideContent, bgSettings, isTitle);
             }
             
-            const slideTitle = document.createElement('h4');
+            // Slide title
+            const titleElement = document.createElement('h2');
+            titleElement.className = 'slide-title';
+            titleElement.textContent = slide.title || `Slide ${index + 1}`;
+            
+            // Apply title styles
             const titleFont = slideStyles.title_font || {};
-            slideTitle.textContent = slide.title || `Slide ${index + 1}`;
-            slideTitle.style.position = 'absolute';
-            slideTitle.style.left = isTitle ? '80px' : '40px';
-            slideTitle.style.top = isTitle ? '160px' : '40px';
-            slideTitle.style.width = isTitle ? '640px' : '720px';
-            slideTitle.style.wordWrap = 'break-word'; // Enable wrapping
-            slideTitle.style.overflowWrap = 'break-word';
-            slideTitle.style.whiteSpace = 'normal';
-            slideTitle.style.maxHeight = isTitle ? '160px' : '100px'; // Limit vertical overflow
-            slideTitle.style.overflow = 'hidden';
-            if (titleFont.name) slideTitle.style.fontFamily = titleFont.name;
-            let fontSize = titleFont.size || (isTitle ? 44 : 32);
-            if (slide.title.length > 40) {
-                fontSize = Math.max(fontSize - 8, 20); // Reduce font size for long titles
-                console.log(`Reduced font size for slide ${index + 1} title: ${slide.title.substring(0, 20)}... to ${fontSize}px`);
-            }
-            slideTitle.style.fontSize = `${fontSize}px`;
-            if (titleFont.bold) slideTitle.style.fontWeight = 'bold';
-            const titleColor = titleFont.color || {r: 0, g: 0, b: 0};
-            slideTitle.style.color = `rgb(${titleColor.r}, ${titleColor.g}, ${titleColor.b})`;
-            slideTitle.style.textAlign = titleFont.alignment || (isTitle ? 'center' : 'left');
-            slidePreview.appendChild(slideTitle);
+            if (titleFont.name) titleElement.style.fontFamily = titleFont.name;
             
+            // Adjust font size based on title length
+            let fontSize = titleFont.size || (isTitle ? 36 : 28);
+            if (slide.title && slide.title.length > 40) {
+                fontSize = Math.max(fontSize - 8, 20);
+            }
+            titleElement.style.fontSize = `${fontSize}px`;
+            
+            // Other title styles
+            if (titleFont.bold) titleElement.style.fontWeight = 'bold';
+            const titleColor = titleFont.color || { r: 0, g: 0, b: 0 };
+            titleElement.style.color = `rgb(${titleColor.r}, ${titleColor.g}, ${titleColor.b})`;
+            titleElement.style.textAlign = titleFont.alignment || (isTitle ? 'center' : 'left');
+            titleElement.style.marginBottom = '20px';
+            titleElement.style.marginTop = isTitle ? '20%' : '0'; // Center title slide vertically
+            
+            slideContent.appendChild(titleElement);
+            
+            // Content (bullet points for content slides)
             if (!isTitle && slide.points && slide.points.length > 0) {
                 const pointsList = document.createElement('ul');
-                pointsList.style.position = 'absolute';
-                pointsList.style.left = '40px';
-                pointsList.style.top = '120px';
-                pointsList.style.width = '400px';
-                pointsList.style.paddingLeft = '20px';
+                pointsList.style.paddingLeft = '25px';
+                pointsList.style.marginTop = '15px';
+                pointsList.style.width = slide.has_image ? '60%' : '90%';
+                
                 slide.points.forEach((point, pointIndex) => {
                     const pointItem = document.createElement('li');
                     pointItem.textContent = point;
+                    
+                    // Apply styling if available
                     if (slide.points_styling && slide.points_styling[pointIndex]) {
                         const styling = slide.points_styling[pointIndex];
                         if (styling.font_name) pointItem.style.fontFamily = styling.font_name;
                         if (styling.font_size) pointItem.style.fontSize = `${styling.font_size}px`;
-                        pointItem.style.color = `rgb(${styling.color?.r || 50}, ${styling.color?.g || 50}, ${styling.color?.b || 50})`;
+                        
+                        const color = styling.color || {r: 50, g: 50, b: 50};
+                        pointItem.style.color = `rgb(${color.r}, ${color.g}, ${color.b})`;
+                        
                         pointItem.style.textAlign = styling.alignment || 'left';
-                        pointItem.style.marginBottom = `${styling.space_after || 6}px`;
-                        pointItem.style.marginTop = `${styling.space_before || 6}px`;
+                        pointItem.style.marginBottom = `${styling.space_after || 10}px`;
+                    } else {
+                        // Default styles
+                        pointItem.style.fontSize = '18px';
+                        pointItem.style.marginBottom = '10px';
+                        pointItem.style.color = '#333';
                     }
+                    
                     pointsList.appendChild(pointItem);
                 });
-                slidePreview.appendChild(pointsList);
+                
+                slideContent.appendChild(pointsList);
             }
             
-            if (slide.has_image && slide.image_prompt && slide.image_style) {
-                const imagePlaceholder = document.createElement('div');
-                imagePlaceholder.className = 'image-placeholder';
-                imagePlaceholder.style.position = 'absolute';
-                imagePlaceholder.style.left = `${slide.image_style.left * 80}px`;
-                imagePlaceholder.style.top = `${slide.image_style.top * 80}px`;
-                imagePlaceholder.style.width = `${slide.image_style.width * 80}px`;
-                imagePlaceholder.style.height = `${slide.image_style.height * 80}px`;
-                imagePlaceholder.style.backgroundColor = `rgb(${slide.image_style.fill_color?.r || 245}, ${slide.image_style.fill_color?.g || 245}, ${slide.image_style.fill_color?.b || 245})`;
-                imagePlaceholder.style.border = `${slide.image_style.border_width || 1.5}px ${slide.image_style.border_style || 'dashed'} rgb(${slide.image_style.border_color?.r || 200}, ${slide.image_style.border_color?.g || 200}, ${slide.image_style.border_color?.b || 200})`;
+            // Image placeholder
+            if (slide.has_image && slide.image_style) {
+                const imgContainer = document.createElement('div');
+                imgContainer.className = 'slide-image-container';
+                
+                // Position the image according to the slide type
+                if (isTitle) {
+                    // Title slide - image is centered below title
+                    imgContainer.style.position = 'absolute';
+                    imgContainer.style.left = '50%';
+                    imgContainer.style.top = '60%';
+                    imgContainer.style.transform = 'translate(-50%, -50%)';
+                    imgContainer.style.width = '50%';
+                    imgContainer.style.height = '30%';
+                } else {
+                    // Content slide - image is on the right
+                    imgContainer.style.position = 'absolute';
+                    imgContainer.style.right = '5%';
+                    imgContainer.style.top = '20%';
+                    imgContainer.style.width = '30%';
+                    imgContainer.style.height = '60%';
+                }
+                
+                // Style the image placeholder
+                imgContainer.style.backgroundColor = `rgb(${slide.image_style.fill_color?.r || 245}, ${slide.image_style.fill_color?.g || 245}, ${slide.image_style.fill_color?.b || 245})`;
+                imgContainer.style.border = `${slide.image_style.border_width || 1.5}px ${slide.image_style.border_style || 'dashed'} rgb(${slide.image_style.border_color?.r || 200}, ${slide.image_style.border_color?.g || 200}, ${slide.image_style.border_color?.b || 200})`;
+                imgContainer.style.borderRadius = '4px';
+                imgContainer.style.display = 'flex';
+                imgContainer.style.flexDirection = 'column';
+                imgContainer.style.alignItems = 'center';
+                imgContainer.style.justifyContent = 'center';
+                imgContainer.style.padding = '10px';
+                
+                // Image icon
                 const imageIcon = document.createElement('div');
-                imageIcon.className = 'image-placeholder-icon';
                 imageIcon.innerHTML = '🖼️';
-                imageIcon.style.fontSize = '48px';
+                imageIcon.style.fontSize = '32px';
                 imageIcon.style.marginBottom = '10px';
-                imagePlaceholder.appendChild(imageIcon);
-                const imageText = document.createElement('p');
-                imageText.textContent = slide.image_prompt;
-                imageText.style.margin = '0';
-                imageText.style.fontStyle = 'italic';
-                imageText.style.fontSize = '14px';
-                imageText.style.color = '#646464';
-                imagePlaceholder.appendChild(imageText);
-                slidePreview.appendChild(imagePlaceholder);
+                imgContainer.appendChild(imageIcon);
+                
+                // Image prompt text
+                if (slide.image_prompt) {
+                    const promptText = document.createElement('p');
+                    promptText.textContent = slide.image_prompt;
+                    promptText.style.margin = '0';
+                    promptText.style.fontSize = '12px';
+                    promptText.style.color = '#6c757d';
+                    promptText.style.fontStyle = 'italic';
+                    promptText.style.textAlign = 'center';
+                    imgContainer.appendChild(promptText);
+                }
+                
+                slideContent.appendChild(imgContainer);
             }
             
-            previewContent.appendChild(slidePreview);
+            slideDiv.appendChild(slideContent);
+            slidesContainer.appendChild(slideDiv);
         });
     }
+    
+    // // Helper function (assuming it exists)
+    // function applyFallbackBackground(element, bgSettings, isTitle) {
+    //     const color = bgSettings.color || { r: 255, g: 255, b: 255 };
+    //     element.style.backgroundColor = `rgb(${color.r}, ${color.g}, ${color.b})`;
+    // }
 
     function applyFallbackBackground(element, bgSettings, isTitle) {
         if (bgSettings.type === 'solid') {
@@ -880,7 +1100,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function updateStatus(message) {
-        statusMessage.textContent = message;
+        if (statusMessage) {
+            statusMessage.textContent = message;
+        } else {
+            console.error('Status message element not found');
+        }
     }
     
     function showError(message) {

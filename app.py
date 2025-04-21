@@ -6,6 +6,7 @@ from pptx.dml.color import RGBColor
 import requests
 import os
 import json
+import io
 import tempfile
 import uuid
 import logging
@@ -229,38 +230,76 @@ def dashboard():
 
 OLLAMA_ENDPOINT = "http://localhost:11434/api/generate"
 
-def generate_text_content(topic, num_slides):
+
+def generate_text_content(topic, num_slides, custom_content=None):
     try:
-        prompt = f"""Generate a detailed JSON for a presentation about '{topic}' with {num_slides} slides.
-        Each slide should have the following:
-        - A detailed title
-        - At least 5 concise and informative bullet points per slide (if applicable)
-        - Provide some additional explanations or insights for each bullet point
-        - Ensure the content is rich, professional, and informative
-        Format EXACTLY as this JSON structure:
-        {{
-            "title": "Overall Presentation Title",
-            "slides": [
-                {{
-                    "title": "Slide 1 Title",
-                    "points": [
-                        "Point 1: Detailed explanation or context",
-                        "Point 2: Detailed explanation or context",
-                        "Point 3: Detailed explanation or context",
-                        "Point 4: Additional context or related points",
-                        "Point 5: Further insights or examples"
-                    ]
-                }},
-                ...
-            ]
-        }}
-        Requirements:
-        - Use clear, professional language
-        - Ensure each slide has a meaningful title
-        - Create at least 5 detailed, informative bullet points per slide
-        - Provide explanations, context, or examples where relevant
-        - Avoid any markdown, code blocks, or extra formatting
-        """
+        if custom_content:
+            # If custom content is provided, ask Ollama to format it
+            prompt = f"""Convert the following presentation content into a well-structured JSON format.
+            The content provided by the user is about: '{topic}'
+            
+            USER CONTENT:
+            {custom_content}
+            
+            Format EXACTLY as this JSON structure:
+            {{
+                "title": "Overall Presentation Title",
+                "slides": [
+                    {{
+                        "title": "Slide 1 Title",
+                        "points": [
+                            "Point 1: Detailed explanation or context",
+                            "Point 2: Detailed explanation or context",
+                            "Point 3: Detailed explanation or context",
+                            "Point 4: Additional context or related points",
+                            "Point 5: Further insights or examples"
+                        ]
+                    }},
+                    ...
+                ]
+            }}
+            
+            Requirements:
+            - Use clear, professional language
+            - Extract slide titles and bullet points from the user content
+            - Organize the content logically
+            - If the user hasn't provided enough structure, create appropriate slide titles and organize the content
+            - Add bullet points where not explicitly provided by user
+            - Avoid any markdown, code blocks, or extra formatting
+            """
+        else:
+            # Original prompt for generating from a topic
+            prompt = f"""Generate a detailed JSON for a presentation about '{topic}' with {num_slides} slides.
+            Each slide should have the following:
+            - A detailed title
+            - At least 5 concise and informative bullet points per slide (if applicable)
+            - Provide some additional explanations or insights for each bullet point
+            - Ensure the content is rich, professional, and informative
+            Format EXACTLY as this JSON structure:
+            {{
+                "title": "Overall Presentation Title",
+                "slides": [
+                    {{
+                        "title": "Slide 1 Title",
+                        "points": [
+                            "Point 1: Detailed explanation or context",
+                            "Point 2: Detailed explanation or context",
+                            "Point 3: Detailed explanation or context",
+                            "Point 4: Additional context or related points",
+                            "Point 5: Further insights or examples"
+                        ]
+                    }},
+                    ...
+                ]
+            }}
+            Requirements:
+            - Use clear, professional language
+            - Ensure each slide has a meaningful title
+            - Create at least 5 detailed, informative bullet points per slide
+            - Provide explanations, context, or examples where relevant
+            - Avoid any markdown, code blocks, or extra formatting
+            """
+        
         payload = {
             "model": "llama3.2:1b",
             "prompt": prompt,
@@ -285,11 +324,13 @@ def generate_text_content(topic, num_slides):
         return presentation_data
     except Exception as e:
         logger.error(f"Text generation error: {str(e)}")
+        # Create a fallback presentation structure
+        title = topic or "Presentation"
         return {
-            "title": topic,
+            "title": title,
             "slides": [
                 {
-                    "title": f"Introduction to {topic}",
+                    "title": f"Introduction to {title}",
                     "points": [
                         "Overview of the topic with more context and background",
                         "Key points to discuss with additional details",
@@ -665,27 +706,102 @@ def create_presentation(content_data, image_prompts=None, template="default"):
     except Exception as e:
         logger.error(f"PowerPoint creation error: {str(e)}")
         raise Exception(f"Failed to create PowerPoint: {str(e)}")
+    
+
+def generate_slide_previews(pptx_path):
+    prs = Presentation(pptx_path)
+    slide_previews = []
+    
+    for slide_idx, slide in enumerate(prs.slides):
+        # Create a blank image for the slide (e.g., 960x540 pixels)
+        img = Image.new('RGB', (960, 540), color=(255, 255, 255))
+        # Here, you'd typically use a library like pptx2img or a custom renderer
+        # For simplicity, we'll simulate with text rendering (upgrade with pptx2img later)
+        from pptx.util import Inches
+        from pptx.dml.color import RGBColor
+
+        # Get slide layout (simplified)
+        title = slide.shapes.title.text if slide.shapes.title else f"Slide {slide_idx + 1}"
+        content = "\n".join([shape.text for shape in slide.shapes if shape.text and shape != slide.shapes.title])
+
+        # Draw title
+        from PIL import ImageDraw, ImageFont
+        draw = ImageDraw.Draw(img)
+        try:
+            font = ImageFont.load_default()
+            draw.text((50, 50), title, fill=(0, 0, 0), font=font)
+            y_text = 100
+            for line in content.split('\n'):
+                draw.text((50, y_text), line, fill=(50, 50, 50), font=font)
+                y_text += 30
+        except Exception as e:
+            print(f"Error rendering text for slide {slide_idx}: {e}")
+
+        # Save image to a byte stream
+        img_byte_arr = io.BytesIO()
+        img.save(img_byte_arr, format='PNG')
+        img_byte_arr.seek(0)
+        slide_previews.append({
+            'image': img_byte_arr,
+            'title': title,
+            'content': content
+        })
+
+    return slide_previews
+    
 @app.route('/generate_ppt', methods=['POST'])
 @login_required
 def generate_ppt():
     try:
         data = request.json
-        topic = data.get('topic')
-        num_slides = int(data.get('num_slides', 3))
         template = data.get('template', 'default')
-        if not topic:
-            return jsonify({"error": "Topic is required"}), 400
-        if num_slides < 1 or num_slides > 20:
-            return jsonify({"error": "Number of slides must be between 1 and 20"}), 400
-        logger.info(f"User {session['username']} generating content for topic: {topic} with {num_slides} slides using template: {template}")
-        content_data = generate_text_content(topic, num_slides)
+        content_type = data.get('content_type', 'auto_generate')  # 'auto_generate', 'custom'
+        
+        # Validate template
+        if not template_manager.get_template(template):
+            return jsonify({"error": "Invalid template selected"}), 400
+        
+        content_data = None
+        topic = None
         image_prompts = {}
+        
+        # Handle different content types
+        if content_type == 'auto_generate':
+            # Original flow - generate from topic
+            topic = data.get('topic')
+            num_slides = int(data.get('num_slides', 3))
+            
+            if not topic:
+                return jsonify({"error": "Topic is required for auto-generated content"}), 400
+            if num_slides < 1 or num_slides > 20:
+                return jsonify({"error": "Number of slides must be between 1 and 20"}), 400
+                
+            logger.info(f"User {session['username']} generating content for topic: {topic} with {num_slides} slides using template: {template}")
+            content_data = generate_text_content(topic, num_slides)
+            
+        elif content_type == 'custom':
+            # New flow - process custom content through Ollama
+            custom_content = data.get('custom_content')
+            custom_title = data.get('custom_title', 'Custom Presentation')
+            
+            if not custom_content:
+                return jsonify({"error": "Custom content is required when selecting custom content type"}), 400
+                
+            logger.info(f"User {session['username']} using custom content with template: {template}")
+            # Pass custom content to Ollama for processing
+            content_data = generate_text_content(custom_title, 0, custom_content)
+            topic = content_data.get("title", custom_title)
+            
+        else:
+            return jsonify({"error": "Invalid content type"}), 400
+        
+        # Generate image prompts for all slides
         try:
             logger.info("Generating title image prompt")
             title_image_prompt = generate_image_prompt(topic)
             if title_image_prompt:
                 image_prompts["title"] = title_image_prompt
-            logger.info("Generating slide image prompts")
+                
             for i, slide_data in enumerate(content_data.get("slides", [])):
                 slide_title = slide_data.get("title", "")
                 slide_image_prompt = generate_image_prompt(f"{topic} - {slide_title}")
@@ -693,10 +809,15 @@ def generate_ppt():
                     image_prompts[str(i)] = slide_image_prompt
         except Exception as e:
             logger.warning(f"Image prompt generation failed: {str(e)}")
+            
+        # Create the presentation
         logger.info(f"Creating PowerPoint presentation with template: {template}")
         ppt_file, preview_data = create_presentation(content_data, image_prompts, template)
+        
+        # Save the file
         unique_id = uuid.uuid4().hex[:8]
-        filename = f"{topic.replace(' ', '_')}_{unique_id}.pptx"
+        safe_topic = topic.replace(' ', '_') if topic else 'Presentation'
+        filename = f"{safe_topic}_{unique_id}.pptx"
         user_filename = os.path.join("static", "downloads", filename)
         os.makedirs(os.path.dirname(user_filename), exist_ok=True)
         with open(ppt_file, 'rb') as src, open(user_filename, 'wb') as dst:
@@ -729,6 +850,8 @@ def generate_ppt():
     except Exception as e:
         logger.error(f"Error processing request: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
+
 
 @app.route('/update_ppt', methods=['POST'])
 @login_required
