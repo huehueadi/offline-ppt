@@ -12,6 +12,7 @@ def create_database():
         username TEXT UNIQUE NOT NULL,
         email TEXT UNIQUE NOT NULL,
         password TEXT NOT NULL,
+        slide_count INTEGER NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     ''')
@@ -24,6 +25,7 @@ def create_database():
         title TEXT NOT NULL,
         filename TEXT NOT NULL,
         template TEXT NOT NULL,
+        slide_count INTEGER NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users (id)
     )

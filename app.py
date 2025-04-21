@@ -56,6 +56,7 @@ def init_db():
         title TEXT NOT NULL,
         filename TEXT NOT NULL,
         template TEXT NOT NULL,
+        slide_count INTEGER NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users (id)
     )
@@ -166,11 +167,6 @@ def logout():
     session.pop('username', None)
     return redirect(url_for('login'))
 
-
-
-
-
-
 from datetime import datetime
 
 @app.route('/dashboard')
@@ -212,24 +208,7 @@ def dashboard():
                           presentations=presentation_list,
                           templates=template_list)
 
-# @app.route('/profile')
-# @login_required
-# def profile():
-#     conn = get_db()
-#     c = conn.cursor()
-#     c.execute('SELECT username, email, created_at FROM users WHERE id = ?', (session['user_id'],))
-#     user = c.fetchone()
-    
-#     c.execute('SELECT COUNT(*) as count FROM presentations WHERE user_id = ?', (session['user_id'],))
-#     presentation_count = c.fetchone()['count']
-#     conn.close()
-    
-#     return render_template('profile.html', 
-#                           user=user, 
-#                           presentation_count=presentation_count)
-
 OLLAMA_ENDPOINT = "http://localhost:11434/api/generate"
-
 
 def generate_text_content(topic, num_slides, custom_content=None):
     try:
@@ -301,7 +280,7 @@ def generate_text_content(topic, num_slides, custom_content=None):
             """
         
         payload = {
-            "model": "llama3.2:1b",
+            "model": "gemma3:1b-it-qat",
             "prompt": prompt,
             "stream": False,
             "format": "json"
@@ -795,6 +774,9 @@ def generate_ppt():
         else:
             return jsonify({"error": "Invalid content type"}), 400
         
+        # Calculate slide count (title slide + content slides)
+        slide_count = 1 + len(content_data.get('slides', []))
+        
         # Generate image prompts for all slides
         try:
             logger.info("Generating title image prompt")
@@ -829,9 +811,9 @@ def generate_ppt():
             conn = get_db()
             c = conn.cursor()
             c.execute('''
-                INSERT INTO presentations (user_id, title, filename, template)
-                VALUES (?, ?, ?, ?)
-            ''', (session['user_id'], content_data.get("title", topic), filename, template))
+                INSERT INTO presentations (user_id, title, filename, template, slide_count)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (session['user_id'], content_data.get("title", topic), filename, template, slide_count))
             conn.commit()
             conn.close()
             logger.info(f"Saved presentation to user {session['username']}'s history")
@@ -851,8 +833,6 @@ def generate_ppt():
         logger.error(f"Error processing request: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
-
-
 @app.route('/update_ppt', methods=['POST'])
 @login_required
 def update_ppt():
@@ -864,6 +844,10 @@ def update_ppt():
         if not content_data or 'title' not in content_data or 'slides' not in content_data:
             return jsonify({"error": "Invalid presentation content"}), 400
         logger.info(f"User {session['username']} updating PowerPoint presentation")
+        
+        # Calculate slide count (title slide + content slides)
+        slide_count = 1 + len(content_data.get('slides', []))
+        
         ppt_file, preview_data = create_presentation(content_data, image_prompts, template)
         unique_id = uuid.uuid4().hex[:8]
         topic = content_data.get("title", "Presentation").replace(' ', '_')
@@ -879,9 +863,9 @@ def update_ppt():
             conn = get_db()
             c = conn.cursor()
             c.execute('''
-                INSERT INTO presentations (user_id, title, filename, template)
-                VALUES (?, ?, ?, ?)
-            ''', (session['user_id'], content_data.get("title", topic), filename, template))
+                INSERT INTO presentations (user_id, title, filename, template, slide_count)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (session['user_id'], content_data.get("title", topic), filename, template, slide_count))
             conn.commit()
             conn.close()
             logger.info(f"Saved updated presentation to user {session['username']}'s history")
@@ -910,47 +894,77 @@ def index():
         return redirect(url_for('dashboard'))
     return redirect(url_for('welcome'))
 
-# @app.route('/dashboard')
-# @login_required
-# def dashboard():
-#     # Get user's presentation history
-#     conn = get_db()
-#     c = conn.cursor()
-#     c.execute('SELECT * FROM presentations WHERE user_id = ? ORDER BY created_at DESC', (session['user_id'],))
-#     presentations = c.fetchall()
-#     conn.close()
-    
-#     # Get all available templates
-#     templates = template_manager.get_all_templates()
-#     template_list = []
-#     for key, template in templates.items():
-#         template_list.append({
-#             "id": key,
-#             "name": template.get('name', key),
-#             "description": template.get('description', ''),
-#             "preview_image": template.get('preview_image', '')
-#         })
-    
-#     return render_template('dashboard.html', 
-#                           username=session['username'], 
-#                           presentations=presentations,
-#                           templates=template_list)
+from flask import flash, redirect, url_for, render_template, session
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
+import sqlite3
 
 @app.route('/profile')
 @login_required
 def profile():
-    conn = get_db()
-    c = conn.cursor()
-    c.execute('SELECT username, email, created_at FROM users WHERE id = ?', (session['user_id'],))
-    user = c.fetchone()
-    
-    c.execute('SELECT COUNT(*) as count FROM presentations WHERE user_id = ?', (session['user_id'],))
-    presentation_count = c.fetchone()['count']
-    conn.close()
-    
-    return render_template('profile.html', 
-                          user=user, 
-                          presentation_count=presentation_count)
+    print(f"Session contents: {session}")
+    try:
+        user_id = int(session['user_id'])
+        print(f"User ID: {user_id}")
+        conn = get_db()
+        c = conn.cursor()
+        
+        # Fetch user data
+        c.execute('SELECT username, email, created_at FROM users WHERE id = ?', (user_id,))
+        user = c.fetchone()
+        print(f"User: {user}")
+        if not user:
+            flash('User not found.', 'error')
+            return redirect(url_for('login'))
+        if not user['username']:
+            flash('Invalid username.', 'error')
+            return redirect(url_for('dashboard'))
+        user = {'username': user['username'], 'email': user['email'], 'created_at': user['created_at']}
+        
+        # Fetch total presentation count
+        c.execute('SELECT COUNT(*) as count FROM presentations WHERE user_id = ?', (user_id,))
+        presentation_count = c.fetchone()['count']
+        print(f"Presentation count: {presentation_count}")
+        
+        # Fetch monthly count
+        month_start = datetime.now() - relativedelta(months=1)
+        c.execute('SELECT COUNT(*) as count FROM presentations WHERE user_id = ? AND created_at >= ?', 
+                  (user_id, month_start))
+        presentations_this_month = c.fetchone()['count']
+        print(f"Monthly count: {presentations_this_month}")
+        
+        # Fetch weekly count
+        week_start = datetime.now() - relativedelta(days=7)
+        c.execute('SELECT COUNT(*) as count FROM presentations WHERE user_id = ? AND created_at >= ?', 
+                  (user_id, week_start))
+        presentations_this_week = c.fetchone()['count']
+        print(f"Weekly count: {presentations_this_week}")
+        
+        # Fetch graph data
+        c.execute('SELECT DATE(created_at) as date, COUNT(*) as count FROM presentations WHERE user_id = ? AND created_at >= ? GROUP BY DATE(created_at)', 
+                  (user_id, month_start))
+        graph_data_raw = c.fetchall()
+        graph_data = [{'date': row['date'], 'count': row['count']} for row in graph_data_raw]
+        print(f"Graph data: {graph_data}")
+        
+        # Fetch recent presentations
+        c.execute('SELECT title, created_at, slide_count FROM presentations WHERE user_id = ? ORDER BY created_at DESC LIMIT 5', 
+                  (session['user_id'],))
+        recent_presentations = c.fetchall()
+        
+        return render_template('profile.html', 
+                              user=user, 
+                              presentation_count=presentation_count,
+                              presentations_this_month=presentations_this_month,
+                              presentations_this_week=presentations_this_week,
+                              graph_data=graph_data,
+                              recent_presentations=recent_presentations)
+    except Exception as e:
+        print(f"Profile route error: {str(e)}")
+        flash(f'Error: {str(e)}', 'error')
+        return redirect(url_for('dashboard'))
+    finally:
+        conn.close()
 
 @app.route('/static/<path:path>')
 def serve_static(path):
@@ -1017,6 +1031,7 @@ def user_history():
             "title": p['title'],
             "filename": p['filename'],
             "template": p['template'],
+            "slide_count": p['slide_count'],
             "created_at": p['created_at'],
             "download_url": f"/download/{p['filename']}"
         } for p in presentations]

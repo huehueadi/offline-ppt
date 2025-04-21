@@ -39,16 +39,18 @@
             font-family: var(--font-family);
             line-height: 1.6;
             margin: 0;
+            min-height: 100vh;
         }
 
         .layout {
             display: grid;
             grid-template-columns: 1fr;
-            grid-template-rows: 60px 1fr;
+            grid-template-rows: 60px 1fr auto;
             grid-template-areas: 
                 "header"
-                "main";
-            height: 100vh;
+                "main"
+                "footer";
+            min-height: 100vh;
         }
 
         .user-header {
@@ -125,6 +127,7 @@
             align-items: center;
             color: var(--secondary-text);
             transition: color 0.2s;
+            margin-left: 10px;
         }
 
         .logout-link:hover {
@@ -133,15 +136,13 @@
 
         .main-content {
             grid-area: main;
-            padding: 1rem;
-            overflow-y: auto;
+            padding: 2rem;
             background-color: var(--primary-bg);
         }
         
         .profile-container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 0;
             display: grid;
             grid-template-columns: 300px 1fr;
             gap: 2rem;
@@ -193,6 +194,7 @@
         .profile-header p {
             color: var(--secondary-text);
             font-size: 1rem;
+            margin-bottom: 1.5rem;
         }
         
         .profile-card {
@@ -210,6 +212,9 @@
             margin-bottom: 1.5rem;
             padding-bottom: 0.75rem;
             border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
         
         .info-row {
@@ -235,7 +240,7 @@
         
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            grid-template-columns: repeat(3, 1fr);
             gap: 1.5rem;
             margin-top: 1rem;
         }
@@ -300,12 +305,14 @@
         }
         
         footer {
+            grid-area: footer;
             text-align: center;
             padding: 2rem;
             color: var(--secondary-text);
             font-size: 0.9rem;
             border-top: 1px solid var(--border-color);
             margin-top: 2rem;
+            background-color: var(--secondary-bg);
         }
         
         @media (max-width: 992px) {
@@ -315,11 +322,19 @@
             }
             
             .profile-header {
-                padding: 2rem 1rem;
+                margin-bottom: 1.5rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(3, 1fr);
             }
         }
         
         @media (max-width: 768px) {
+            .main-content {
+                padding: 1rem;
+            }
+            
             .info-row {
                 flex-direction: column;
             }
@@ -329,7 +344,7 @@
             }
             
             .stats-grid {
-                grid-template-columns: 1fr 1fr;
+                grid-template-columns: repeat(2, 1fr);
             }
         }
         
@@ -350,6 +365,43 @@
         .gap-2 {
             gap: 0.5rem;
         }
+
+        .recent-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .recent-table th,
+        .recent-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .recent-table th {
+            background-color: var(--light-color);
+            font-weight: 600;
+            color: var(--dark-color);
+        }
+
+        .recent-table tr:hover {
+            background-color: rgba(67, 97, 238, 0.05);
+        }
+
+        .recent-table .btn {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .chart-container {
+            margin-bottom: 1.5rem;
+            height: 250px;
+            position: relative;
+            border-radius: var(--border-radius);
+            background-color: var(--light-color);
+            padding: 1rem;
+        }
     </style>
 </head>
 <body>
@@ -364,10 +416,10 @@
                 <a href="/profile" class="active"><i class="fas fa-user"></i> Profile</a>
                 <div class="user-profile">
                     <div class="user-avatar">
-                        {{ user.username[0].upper() if user.username else "?" }}
+                        {{ user.username[0].upper() if user and user.username else "?" }}
                     </div>
-                    <span>{{ user.username }}</span>
-                    <a href="/logout" class="ml-2 logout-link" title="Logout">
+                    <span>{{ user.username if user else "Unknown" }}</span>
+                    <a href="/logout" class="logout-link" title="Logout">
                         <i class="fas fa-sign-out-alt"></i>
                     </a>
                 </div>
@@ -381,17 +433,18 @@
                 <div class="profile-sidebar">
                     <div class="profile-header">
                         <div class="profile-avatar">
-                            {{ user.username[0].upper() if user.username else "?" }}
+                            {{ user.username[0].upper() if user and user.username else "?" }}
                         </div>
-                        <h1>{{ user.username }}</h1>
-                        <p>Member since {{ user.created_at }}</p>
+                        <h1>{{ user.username if user else "Unknown" }}</h1>
+                        <p>Member since {{ user.created_at if user else "N/A" }}</p>
                         
-                        <div class="actions-container" style="margin-top: 1.5rem;">
+                        <div class="actions-container">
                             <a href="/dashboard" class="btn btn-primary" style="width: 100%;">
                                 <i class="fas fa-plus"></i> New Presentation
                             </a>
                         </div>
                     </div>
+                    
                 </div>
                 
                 <!-- Right Main Content - Account Info and Stats -->
@@ -401,34 +454,26 @@
                         
                         <div class="info-row">
                             <div class="info-label">Username</div>
-                            <div class="info-value">{{ user.username }}</div>
+                            <div class="info-value">{{ user.username if user else "N/A" }}</div>
                         </div>
                         
                         <div class="info-row">
                             <div class="info-label">Email</div>
-                            <div class="info-value">{{ user.email }}</div>
+                            <div class="info-value">{{ user.email if user else "N/A" }}</div>
                         </div>
                         
                         <div class="info-row">
                             <div class="info-label">Account Created</div>
-                            <div class="info-value">{{ user.created_at }}</div>
+                            <div class="info-value">{{ user.created_at if user else "N/A" }}</div>
                         </div>
                     </div>
                     
                     <div class="profile-card">
                         <h2><i class="fas fa-chart-line"></i> Your Statistics</h2>
                         
-                        <!-- Graph visualization -->
-                        <div style="margin-bottom: 1.5rem; height: 200px; background-color: var(--light-color); border-radius: var(--border-radius); display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden;">
-                            <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: flex-end; padding: 1rem;">
-                                <div style="flex: 1; height: 30%; background-color: rgba(67, 97, 238, 0.7); margin: 0 5px; border-radius: 4px 4px 0 0;"></div>
-                                <div style="flex: 1; height: 45%; background-color: rgba(67, 97, 238, 0.7); margin: 0 5px; border-radius: 4px 4px 0 0;"></div>
-                                <div style="flex: 1; height: 60%; background-color: rgba(67, 97, 238, 0.7); margin: 0 5px; border-radius: 4px 4px 0 0;"></div>
-                                <div style="flex: 1; height: 40%; background-color: rgba(67, 97, 238, 0.7); margin: 0 5px; border-radius: 4px 4px 0 0;"></div>
-                                <div style="flex: 1; height: 70%; background-color: rgba(67, 97, 238, 0.7); margin: 0 5px; border-radius: 4px 4px 0 0;"></div>
-                                <div style="flex: 1; height: 50%; background-color: rgba(67, 97, 238, 0.7); margin: 0 5px; border-radius: 4px 4px 0 0;"></div>
-                            </div>
-                            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0.1)); pointer-events: none;"></div>
+                        <!-- Dynamic Graph with Container -->
+                        <div class="chart-container">
+                            <canvas id="presentationChart"></canvas>
                         </div>
                         
                         <div class="stats-grid">
@@ -438,23 +483,120 @@
                             </div>
                             
                             <div class="stat-card">
-                                <div class="stat-value">6</div>
+                                <div class="stat-value">{{ presentations_this_month }}</div>
                                 <div class="stat-label">This Month</div>
                             </div>
                             
                             <div class="stat-card">
-                                <div class="stat-value">2</div>
+                                <div class="stat-value">{{ presentations_this_week }}</div>
                                 <div class="stat-label">This Week</div>
                             </div>
                         </div>
                     </div>
+
+                    <div class="profile-card">
+                        <h2><i class="fas fa-file-powerpoint"></i> Recent Presentations</h2>
+                        <table class="recent-table">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Created</th>
+                                    <th>Slides</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for presentation in recent_presentations %}
+                                <tr>
+                                    <td>{{ presentation.title or "Untitled" }}</td>
+                                    <td>{{ presentation.created_at }}</td>
+                                    <td>{{ presentation.slide_count }}</td>
+                                    <td>
+                                        <a href="/presentation/{{ presentation.id }}" class="btn btn-primary">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="4" style="text-align: center;">No presentations yet.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
+        
+        <footer>
+            Powered by Local Ollama | Created with Flask and Python-PPTX
+        </footer>
     </div>
-    
-    <footer>
-        Powered by Local Ollama | Created with Flask and Python-PPTX
-    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const ctx = document.getElementById('presentationChart').getContext('2d');
+        const graphData = {{ graph_data | tojson | default('[]') | safe }};
+        const labels = graphData.length ? graphData.map(item => new Date(item.date).toLocaleDateString()) : ['No Data'];
+        const counts = graphData.length ? graphData.map(item => item.count) : [0];
+        
+        // Create gradient for the bars
+        const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+        gradient.addColorStop(0, 'rgba(67, 97, 238, 0.8)');
+        gradient.addColorStop(1, 'rgba(67, 97, 238, 0.2)');
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Presentations Created',
+                    data: counts,
+                    backgroundColor: gradient,
+                    borderColor: 'rgba(67, 97, 238, 1)',
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Number of Presentations'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'Date'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                        padding: 10,
+                        cornerRadius: 5,
+                        displayColors: false
+                    }
+                }
+            }
+        });
+    </script>
 </body>
 </html>
